@@ -12,7 +12,7 @@ import "Application_Fire_Model.gaml"
 /*=============================================
 *                                                   Plot 
 *=============================================*/
-grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: false use_individual_shapes: false
+grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: false use_individual_shapes: false  control: simple_bdi
 {
 
 // Variables
@@ -56,8 +56,20 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 		}
 
 	}
+	
+//	//way too slow, which I do not understand
+//	perceive target: resident in: 50 when: burning  {
+//		if(not has_belief(immediate_danger) and flip(probability_to_react) and not in_safe_place)
+//		{
+//			do add_belief(immediate_danger, 100.0);
+//			do add_desire(run_away);
+//			do add_intention(escaping); 
+//			escape_target <- get_closest_safe_place();
+//			do status("Perceived fire");
+//		}
+//	}
 
-	// Si le plot brûe
+	// Si le plot brûle
 	reflex burn when: burning
 	{
 
@@ -65,7 +77,8 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 		color <- rgb(1 among [# orange, # red]);
 
 		// Répèrcution du plot en feu (tous 10 cycles)
-		if ((cycle + id) mod 10 = 0)
+//		if ((cycle + id) mod 10 = 0)
+		if ((cycle + id) mod 1 = 0)
 		{
 
 		// Dommages sur les personnes trop proches :
@@ -120,11 +133,13 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			//==============
 			// TODO les routes ne brûlent pas encore...
 			// Récupération des plots voisins qui sont : non en feu, non brûlés.
+			
 			list<plot> neighbors_plot <- neighbors where (!each.burning and each.life > 0);
 			loop neighbor over: neighbors_plot
 			{
 				if (neighbor.flammable)
 				{
+					
 				// Récupération de la chaleur du plot voisin
 				// Si sa chaleur est faible => elle augment en fonction de l'inclinaisont de feu
 					float combust_limmit <- is_road ? 5.0 : (is_building ? 2.5 : 1.0);
@@ -139,7 +154,7 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 					{
 						neighbor.burning <- true;
 					}
-
+//
 				}
 
 			}

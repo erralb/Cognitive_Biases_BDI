@@ -1,8 +1,12 @@
 /**
-* Name: Simulation Feux de forêt basé sur l'experience du Black Saturday 
+* Name: BDI Bushfire simulation base on the Australian Black Saturday
 *
-* Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
+* Author: Pierre Blarre
+* 
+* Original Authors: Sofiane Sillali, Thomas Artigue, Pierre Blarre (No BDI)
+* 
 * Description: Modéliser cet évenement pour trouver des solutions afin de minimiser l'impact humain et matériel
+* 
 * Fichier : Application_Fire_Model.gaml
 */
 model Application_Fire_Model
@@ -40,7 +44,6 @@ global
 	float drought <- 0.3; //niveau de secheresse
 	float hurting_distance <- 2.0 # m;
 	float field_of_view <- 15.0 # m;
-	int nb_residents <- 100;
 	int nb_fireman <- 5;
 	int nb_bunker <- 0;
 	int nb_exit <- 0;
@@ -62,18 +65,28 @@ global
 	string ask_for_help <- "Venez m'aider";
 
 	// Croyances
-	string no_danger <- "Pas de danger immédiat";
-	string potential_danger <- "Danger potentiel";
-	string immediate_danger <- "Danger immédiat";
+	string no_danger <- "No danger";
+	string potential_danger <- "Potential danger";
+	string immediate_danger <- "Immediate danger";
 
 	// Init variables especes
-	int nb_isolated_and_vulnerable <- 5;
-	int nb_unaware_reactors <- 5;
-	int nb_threat_avoiders <- 30;
-	int nb_threat_monitors <- 30;
-	int nb_can_do_defenders <- 10;
-	int nb_considered_defenders <- 10;
-	int nb_livelihood_defenders <- 10;
+//	int nb_residents <- 100;
+//	int nb_isolated_and_vulnerable <- 5;
+//	int nb_unaware_reactors <- 5;
+//	int nb_threat_avoiders <- 30;
+//	int nb_threat_monitors <- 30;
+//	int nb_can_do_defenders <- 10;
+//	int nb_considered_defenders <- 10;
+//	int nb_livelihood_defenders <- 10;
+
+	int nb_residents <- 20;
+	int nb_isolated_and_vulnerable <- 0;
+	int nb_unaware_reactors <- 0;
+	int nb_threat_avoiders <- 0;
+	int nb_threat_monitors <- 0;
+	int nb_can_do_defenders <- 0;
+	int nb_considered_defenders <- 0;
+	int nb_livelihood_defenders <- 0;
 
 	// Bouton Application
 	bool personalized_msg <- false;
@@ -156,6 +169,8 @@ global
 		create can_do_defenders number: nb_can_do_defenders;
 		create considered_defenders number: nb_considered_defenders;
 		create livelihood_defenders number: nb_livelihood_defenders;
+		
+		create resident number: nb_residents;
 
 		// Création des pompiers et policiers
 		create fireman number: nb_fireman;
@@ -210,35 +225,36 @@ experiment Simulation_Model_1 type: gui
 {
 
 // Boutons d'interaction
-	action createFire
-	{
-		create fire_starter;
-	}
-	//	action createfireman{create fireman;}
-	user_command Create_Fire action: createFire;
-	//	user_command Create_FireMan action:createfireman;
-
-	// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	//	parameter "Nb Bunker" var: nb_bunker category: "Agents" min:0;	
-
-	//	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
-	//	parameter "Trained population" var: trained_population category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	action createFire
+//	{
+//		create fire_starter;
+//	}
+//	//	action createfireman{create fireman;}
+//	user_command Create_Fire action: createFire;
+//	//	user_command Create_FireMan action:createfireman;
+//
+//	// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	//	parameter "Nb Bunker" var: nb_bunker category: "Agents" min:0;	
+//
+//	//	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
+//	//	parameter "Trained population" var: trained_population category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+	
 	init
 	{
 		simulation_name <- "Simulation_Model_1";
@@ -248,168 +264,51 @@ experiment Simulation_Model_1 type: gui
 	{
 
 	// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-		monitor "Buildings damage" value: buildings_damage color: #grey;
+//		monitor "Current_time" value: current_time;
+//		monitor "Fire Size" value: fire_size;
+//		monitor "Resident alive" value: residents_alive;
+//		monitor "Dead resident" value: residents_dead;
+//		monitor "Alerted resident" value: residents_alert;
+//		monitor "Resident in safe place" value: residents_bunker;
+//		monitor "Buildings damage" value: buildings_damage color: #grey;
 
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-		// Visualisation 3D
-		display map type: opengl
-		{
-			species people aspect: sphere3D;
-			species road aspect: base;
-			species resident aspect: sphere3D;
-			species isolated_and_vulnerable aspect: sphere3D;
-			species unaware_reactors aspect: sphere3D;
-			species threat_avoiders aspect: sphere3D;
-			species threat_monitors aspect: sphere3D;
-			species can_do_defenders aspect: sphere3D;
-			species considered_defenders aspect: sphere3D;
-			species livelihood_defenders aspect: sphere3D;
-			species fireman aspect: sphere3D;
-			species policeman aspect: sphere3D;
-			species waterway aspect: base refresh: false;
-			grid plot transparency: 0.4;
-			species fire_starter aspect: base;
-			species city_exit aspect: base transparency: 0.1;
-			species building aspect: base;
-			species firewatch aspect: base;
-			light 1 color: (is_night ? 50 : 230);
-		}
-
-	}
-
-}
-
-/*=============================================
-*         Simulation du Model 2 : Personnalisation des messages
-*=============================================*/
-experiment Simulation_Model_2 type: gui
-{
-
-// Boutons d'interaction
-	action createFire
-	{
-		create fire_starter;
-	}
-	//	action createfireman{create fireman;}
-	user_command Create_Fire action: createFire;
-	//	user_command Create_FireMan action:createfireman;
-
-	// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	//	parameter "Nb Bunker" var: nb_bunker init: 5 category: "Agents" min:0;	
-	parameter "Personnalized msg" var: personalized_msg init: true category: "Modelisation";
-	//	parameter "Trained population" var: trained_population category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Simulation_Model_2";
-	}
-
-	output
-	{
-
-	// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
+//		// Visualisation graphique
+//		display Global
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
 
 		// Visualisation 3D
 		display map type: opengl
@@ -428,7 +327,7 @@ experiment Simulation_Model_2 type: gui
 			species policeman aspect: sphere3D;
 			species waterway aspect: base refresh: false;
 			grid plot transparency: 0.4;
-			species fire_starter aspect: base;
+			species fire_starter aspect: base refresh: true;
 			species city_exit aspect: base transparency: 0.1;
 			species building aspect: base;
 			species firewatch aspect: base;
@@ -439,667 +338,784 @@ experiment Simulation_Model_2 type: gui
 
 }
 
-/*=============================================
-*         Simulation du Model 3 : Abris anti-feu
-*=============================================*/
-experiment Simulation_Model_3 type: gui
-{
-
-// Boutons d'interaction
-	action createFire
-	{
-		create fire_starter;
-	}
-	//	action createfireman{create fireman;}
-	user_command Create_Fire action: createFire;
-	//	user_command Create_FireMan action:createfireman;
-
-	// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	parameter "Nb Bunker" var: nb_bunker init: 7 category: "Agents" min: 0;
-	parameter "Personnalized msg" var: personalized_msg init: false category: "Modelisation";
-	parameter "Trained population" var: trained_population init: true category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Simulation_Model_3";
-	}
-
-	output
-	{
-
-	// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-		// Visualisation 3D
-		display map type: opengl
-		{
-			species people aspect: sphere3D;
-			species road aspect: base;
-			species resident aspect: sphere3D;
-			species isolated_and_vulnerable aspect: sphere3D;
-			species unaware_reactors aspect: sphere3D;
-			species threat_avoiders aspect: sphere3D;
-			species threat_monitors aspect: sphere3D;
-			species can_do_defenders aspect: sphere3D;
-			species considered_defenders aspect: sphere3D;
-			species livelihood_defenders aspect: sphere3D;
-			species fireman aspect: sphere3D;
-			species policeman aspect: sphere3D;
-			species waterway aspect: base refresh: false;
-			grid plot transparency: 0.4;
-			species fire_starter aspect: base;
-			species city_exit aspect: base transparency: 0.1;
-			species building aspect: base;
-			species firewatch aspect: base;
-			light 1 color: (is_night ? 50 : 230);
-		}
-
-	}
-
-}
-
-/*=============================================
-*         Simulation du Model 4 : Renfort pompiers et Piquets de feu
-*=============================================*/
-experiment Simulation_Model_4 type: gui
-{
-
-// Boutons d'interaction
-	action createFire
-	{
-		create fire_starter;
-	}
-
-	user_command Create_Fire action: createFire;
-
-	// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Simulation_Model_4";
-		tactical_fireman <- true;
-		create firewatch number: 1 with: [choosed_location::{ 100, 350 }];
-		create firewatch number: 1 with: [choosed_location::{ 700, 450 }];
-	}
-
-	output
-	{
-
-	// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-		// Visualisation 3D
-		display map type: opengl
-		{
-			species people aspect: sphere3D;
-			species road aspect: base;
-			species resident aspect: sphere3D;
-			species isolated_and_vulnerable aspect: sphere3D;
-			species unaware_reactors aspect: sphere3D;
-			species threat_avoiders aspect: sphere3D;
-			species threat_monitors aspect: sphere3D;
-			species can_do_defenders aspect: sphere3D;
-			species considered_defenders aspect: sphere3D;
-			species livelihood_defenders aspect: sphere3D;
-			species fireman aspect: sphere3D;
-			species policeman aspect: sphere3D;
-			species waterway aspect: base refresh: false;
-			grid plot transparency: 0.4;
-			species fire_starter aspect: base;
-			species city_exit aspect: base transparency: 0.1;
-			species building aspect: base;
-			species firewatch aspect: base;
-			light 1 color: (is_night ? 50 : 230);
-		}
-
-	}
-
-}
-
-/*=============================================
-*         Batch Simulation 1 : Situation similaire au black Saturday
-*=============================================*/
-// repeat : 10 -> Nombre de répétitions
-// keep_seed: false -> Ne pas garder la même graîne aléatoire pour chaque simulation
-// parameter [...] "step : 5" -> Pour faire varier un attribut entre chaque simulation
-experiment Batch_Model_1 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
-{
-
-// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	//	parameter "Nb Bunker" var: nb_bunker category: "Agents" min:0;	
-
-	//	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
-	//	parameter "Trained population" var: trained_population category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Batch_Model_1";
-	}
-
-	reflex test
-	{
-		write "fin batch";
-	}
-
-	// Camembert des morts par personnalité
-	permanent
-	{
-		display Survivor_pie
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-	}
-
-}
-
-/*=============================================
-*         Batch  Model 2 : Personnalisation des messages
-*=============================================*/
-experiment Batch_Model_2 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
-{
-// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	//	parameter "Nb Bunker" var: nb_bunker init: 5 category: "Agents" min:0;	
-	parameter "Personnalized msg" var: personalized_msg init: true category: "Modelisation";
-	//	parameter "Trained population" var: trained_population category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Batch_Model_2";
-	}
-
-	reflex test
-	{
-		write "fin batch";
-	}
-
-	// Camembert des morts par personnalité
-	permanent
-	{
-		display Survivor_pie
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-	}
-
-}
-
-/*=============================================
-*         BATCH : Simulation 3 : Abris anti-feu
-*=============================================*/
-// repeat : 5 -> Nombre de répétitions
-// keep_seed: false -> Ne pas garder la même graîne aléatoire pour chaque simulation
-// parameter [...] "step : 5" -> Pour faire varier un attribut entre chaque simulation
-experiment Batch_Model_3 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
-{
-
-// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	parameter "Nb Abris" var: nb_bunker init: 7 category: "Agents" min: 0 max: 10;
-	parameter "Personnalized msg" var: personalized_msg init: false category: "Modelisation";
-	parameter "Trained population" var: trained_population init: true category: "Modelisation";
-	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{
-		simulation_name <- "Batch_Model_3";
-	}
-
-	reflex test
-	{
-		write "fin batch";
-	}
-
-	// Camembert des morts par personnalité
-	permanent
-	{
-		display Survivor_pie
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-	}
-
-}
-
-/*=============================================
-*         Batch du Model 4 : Piquets de feu
-*=============================================*/
-experiment Batch_Model_4 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
-{
-// Paramètres
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
-	parameter "Tactical fireman" init: true  var: tactical_fireman category: "Modelisation";
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	init
-	{		
-		simulation_name <- "Batch_Model_4";
-		tactical_fireman <- true;
-	}
-
-	reflex test
-	{
-		write "fin batch";
-	}
-
-	// Camembert des morts par personnalité
-	permanent
-	{
-		display Survivor_pie
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
-	}
-
-}
-
-/*=======================================================
-*      Exemple d'experience complète avec l'ensemble de paramètres disponibles    
-*=======================================================*/
-//experiment Launch_Simulation_Model_B type: gui {
-//	
-//	// Boutons d'interaction
-//	action createFire{create fire_starter;}
-//	action createfireman{create fireman;}
-//	
-//	user_command Create_Fire action:createFire;
-//	user_command Create_FireMan action:createfireman;
-//	
-//	
+///*=============================================
+//*         Simulation du Model 2 : Personnalisation des messages
+//*=============================================*/
+//experiment Simulation_Model_2 type: gui
+//{
+//
+//// Boutons d'interaction
+//	action createFire
+//	{
+//		create fire_starter;
+//	}
+//	//	action createfireman{create fireman;}
+//	user_command Create_Fire action: createFire;
+//	//	user_command Create_FireMan action:createfireman;
+//
 //	// Paramètres
-//	parameter "Start hour" var: starting_hour category: "Global" min:0;		
-//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
-//	parameter "Wind" var: wind category: "Global" min:0.0 max:0.5;	
-//	parameter "Drought" var: drought category: "Global" min:0.0 max:0.5;
-//	parameter "Hurting distance" var: hurting_distance category: "Global" min:1.0 max:5.0;	
-//	parameter "Nb Bunker" var: nb_bunker <- 40 category: "Global" min:0;	
-//	
-//	parameter "Nb fireman" var:nb_fireman category: "Agents" min:0;
-//	parameter "Nb Policeman" var:nb_policeman category: "Agents" min:0;
-//	
-//	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
-//	parameter "Trained population" var: trained_population category: "Modelisation";
-//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
-//	
-//	parameter "Isolated & Vulnerable" var:nb_isolated_and_vulnerable category: "Especes" min:0;
-//	parameter "Unaware reactors" var:nb_unaware_reactors category: "Especes" min:0;
-//	parameter "Threat avoiders" var:nb_threat_avoiders category: "Especes" min:0;
-//	parameter "Threat monitors" var:nb_threat_monitors category: "Especes" min:0;		
-//	parameter "Can do defenders" var:nb_can_do_defenders category: "Especes" min:0;
-//	parameter "Considered defenders" var:nb_considered_defenders category: "Especes" min:0;
-//	parameter "Livelihood defenders" var:nb_livelihood_defenders category: "Especes" min:0;
-//				
-//	output {
-//		
-//		// Valeurs monitorées
-//        monitor "Current_time" value: current_time ;
-//        monitor "Fire Size" value: fire_size;
-//        monitor "Resident alive" value: residents_alive;
-//        monitor "Dead resident" value: residents_dead;
-//        monitor "Alerted resident" value: residents_alert;
-//        monitor "Resident in safe place" value: residents_bunker;
-//	        
-//        // Visualisation graphique
-//		display Global {
-//			chart "Global" type: series{
-//				data "Fire Size" value: fire_size/50 color: #orange;
-//				
-//				data "Dead people" value: length(every_resident where !each.alive) color: #red;
-//				data "People in alerte" value: length(every_resident where each.on_alert) color: #yellow;
-//				data "People in safe place" value: length(every_resident where each.in_safe_place) color: #green;
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	//	parameter "Nb Bunker" var: nb_bunker init: 5 category: "Agents" min:0;	
+//	parameter "Personnalized msg" var: personalized_msg init: true category: "Modelisation";
+//	//	parameter "Trained population" var: trained_population category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Simulation_Model_2";
+//	}
+//
+//	output
+//	{
+//
+//	// Valeurs monitorées
+//		monitor "Current_time" value: current_time;
+//		monitor "Fire Size" value: fire_size;
+//		monitor "Resident alive" value: residents_alive;
+//		monitor "Dead resident" value: residents_dead;
+//		monitor "Alerted resident" value: residents_alert;
+//		monitor "Resident in safe place" value: residents_bunker;
+//
+//		// Visualisation graphique
+//		display Global
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
 //			}
-//		}
-//			
-//		// Camembert des morts par personnalité
-//		display Dead_pie {
-//			chart "Camembert des morts par Personnalité" type:pie {
-//				data "can_do_defenders" value:length(can_do_defenders where !each.alive)  color:#green;
-//				data "considered_defenders" value:length(considered_defenders where !each.alive)  color:#darkgreen;
-//				data "livelihood_defenders" value:length(livelihood_defenders where !each.alive)  color:#lightgreen;
-//				data "threat_monitors" value:length(threat_monitors where !each.alive)  color:#purple;
-//				data "threat_avoiders" value:length(threat_avoiders where !each.alive)  color:#violet;
-//				data "unaware_reactors" value:length(unaware_reactors where !each.alive)  color:#cyan;
-//				data "isolated_and_vulnerable" value:length(isolated_and_vulnerable where !each.alive)  color:#blue;
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
 //			}
-//		}
-//		
-//		// Camembert des morts par personnalité
-//		display Survivor_pie {
-//			chart "Camembert des survivants par Personnalité" type:pie {
-//				data "can_do_defenders" value:length(can_do_defenders where each.alive)  color:#green;
-//				data "considered_defenders" value:length(considered_defenders where each.alive)  color:#darkgreen;
-//				data "livelihood_defenders" value:length(livelihood_defenders where each.alive)  color:#lightgreen;
-//				data "threat_monitors" value:length(threat_monitors where each.alive)  color:#purple;
-//				data "threat_avoiders" value:length(threat_avoiders where each.alive)  color:#violet;
-//				data "unaware_reactors" value:length(unaware_reactors where each.alive)  color:#cyan;
-//				data "isolated_and_vulnerable" value:length(isolated_and_vulnerable where each.alive)  color:#blue;
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
 //			}
+//
 //		}
-//			
-//		
-//          // Visualisation 3D
-//		display map type: opengl {
-//           	species people aspect:sphere3D;   
-//			species road aspect: base; 
-//           	species resident aspect:sphere3D;  
-//           	species isolated_and_vulnerable aspect:sphere3D; 
-//           	species unaware_reactors aspect:sphere3D; 
-//           	species threat_avoiders aspect:sphere3D;
-//           	species threat_monitors aspect:sphere3D; 
-//           	species can_do_defenders  aspect:sphere3D; 
-//			species considered_defenders  aspect:sphere3D; 
-//			species livelihood_defenders aspect:sphere3D; 
-//           	species fireman aspect:sphere3D;  
-//           	species policeman aspect:sphere3D;    
+//
+//		// Visualisation 3D
+//		display map type: opengl
+//		{
+//			species people aspect: sphere3D;
+//			species road aspect: base;
+//			species resident aspect: sphere3D;
+//			species isolated_and_vulnerable aspect: sphere3D;
+//			species unaware_reactors aspect: sphere3D;
+//			species threat_avoiders aspect: sphere3D;
+//			species threat_monitors aspect: sphere3D;
+//			species can_do_defenders aspect: sphere3D;
+//			species considered_defenders aspect: sphere3D;
+//			species livelihood_defenders aspect: sphere3D;
+//			species fireman aspect: sphere3D;
+//			species policeman aspect: sphere3D;
 //			species waterway aspect: base refresh: false;
 //			grid plot transparency: 0.4;
-//			species fire_starter aspect: base ;
+//			species fire_starter aspect: base;
 //			species city_exit aspect: base transparency: 0.1;
-//			species building aspect: base ;
-//			species firewatch aspect: base ;
-//			light 1 color:(is_night ? 50 : 230);
-//		}  
-//			
+//			species building aspect: base;
+//			species firewatch aspect: base;
+//			light 1 color: (is_night ? 50 : 230);
+//		}
+//
 //	}
-// 
+//
 //}
+//
+///*=============================================
+//*         Simulation du Model 3 : Abris anti-feu
+//*=============================================*/
+//experiment Simulation_Model_3 type: gui
+//{
+//
+//// Boutons d'interaction
+//	action createFire
+//	{
+//		create fire_starter;
+//	}
+//	//	action createfireman{create fireman;}
+//	user_command Create_Fire action: createFire;
+//	//	user_command Create_FireMan action:createfireman;
+//
+//	// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	parameter "Nb Bunker" var: nb_bunker init: 7 category: "Agents" min: 0;
+//	parameter "Personnalized msg" var: personalized_msg init: false category: "Modelisation";
+//	parameter "Trained population" var: trained_population init: true category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Simulation_Model_3";
+//	}
+//
+//	output
+//	{
+//
+//	// Valeurs monitorées
+//		monitor "Current_time" value: current_time;
+//		monitor "Fire Size" value: fire_size;
+//		monitor "Resident alive" value: residents_alive;
+//		monitor "Dead resident" value: residents_dead;
+//		monitor "Alerted resident" value: residents_alert;
+//		monitor "Resident in safe place" value: residents_bunker;
+//
+//		// Visualisation graphique
+//		display Global
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//		// Visualisation 3D
+//		display map type: opengl
+//		{
+//			species people aspect: sphere3D;
+//			species road aspect: base;
+//			species resident aspect: sphere3D;
+//			species isolated_and_vulnerable aspect: sphere3D;
+//			species unaware_reactors aspect: sphere3D;
+//			species threat_avoiders aspect: sphere3D;
+//			species threat_monitors aspect: sphere3D;
+//			species can_do_defenders aspect: sphere3D;
+//			species considered_defenders aspect: sphere3D;
+//			species livelihood_defenders aspect: sphere3D;
+//			species fireman aspect: sphere3D;
+//			species policeman aspect: sphere3D;
+//			species waterway aspect: base refresh: false;
+//			grid plot transparency: 0.4;
+//			species fire_starter aspect: base;
+//			species city_exit aspect: base transparency: 0.1;
+//			species building aspect: base;
+//			species firewatch aspect: base;
+//			light 1 color: (is_night ? 50 : 230);
+//		}
+//
+//	}
+//
+//}
+//
+///*=============================================
+//*         Simulation du Model 4 : Renfort pompiers et Piquets de feu
+//*=============================================*/
+//experiment Simulation_Model_4 type: gui
+//{
+//
+//// Boutons d'interaction
+//	action createFire
+//	{
+//		create fire_starter;
+//	}
+//
+//	user_command Create_Fire action: createFire;
+//
+//	// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Simulation_Model_4";
+//		tactical_fireman <- true;
+//		create firewatch number: 1 with: [choosed_location::{ 100, 350 }];
+//		create firewatch number: 1 with: [choosed_location::{ 700, 450 }];
+//	}
+//
+//	output
+//	{
+//
+//	// Valeurs monitorées
+//		monitor "Current_time" value: current_time;
+//		monitor "Fire Size" value: fire_size;
+//		monitor "Resident alive" value: residents_alive;
+//		monitor "Dead resident" value: residents_dead;
+//		monitor "Alerted resident" value: residents_alert;
+//		monitor "Resident in safe place" value: residents_bunker;
+//
+//		// Visualisation graphique
+//		display Global
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//		// Visualisation 3D
+//		display map type: opengl
+//		{
+//			species people aspect: sphere3D;
+//			species road aspect: base;
+//			species resident aspect: sphere3D;
+//			species isolated_and_vulnerable aspect: sphere3D;
+//			species unaware_reactors aspect: sphere3D;
+//			species threat_avoiders aspect: sphere3D;
+//			species threat_monitors aspect: sphere3D;
+//			species can_do_defenders aspect: sphere3D;
+//			species considered_defenders aspect: sphere3D;
+//			species livelihood_defenders aspect: sphere3D;
+//			species fireman aspect: sphere3D;
+//			species policeman aspect: sphere3D;
+//			species waterway aspect: base refresh: false;
+//			grid plot transparency: 0.4;
+//			species fire_starter aspect: base;
+//			species city_exit aspect: base transparency: 0.1;
+//			species building aspect: base;
+//			species firewatch aspect: base;
+//			light 1 color: (is_night ? 50 : 230);
+//		}
+//
+//	}
+//
+//}
+//
+///*=============================================
+//*         Batch Simulation 1 : Situation similaire au black Saturday
+//*=============================================*/
+//// repeat : 10 -> Nombre de répétitions
+//// keep_seed: false -> Ne pas garder la même graîne aléatoire pour chaque simulation
+//// parameter [...] "step : 5" -> Pour faire varier un attribut entre chaque simulation
+//experiment Batch_Model_1 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
+//{
+//
+//// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	//	parameter "Nb Bunker" var: nb_bunker category: "Agents" min:0;	
+//
+//	//	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
+//	//	parameter "Trained population" var: trained_population category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Batch_Model_1";
+//	}
+//
+//	reflex test
+//	{
+//		write "fin batch";
+//	}
+//
+//	// Camembert des morts par personnalité
+//	permanent
+//	{
+//		display Survivor_pie
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//	}
+//
+//}
+//
+///*=============================================
+//*         Batch  Model 2 : Personnalisation des messages
+//*=============================================*/
+//experiment Batch_Model_2 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
+//{
+//// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	//	parameter "Nb Bunker" var: nb_bunker init: 5 category: "Agents" min:0;	
+//	parameter "Personnalized msg" var: personalized_msg init: true category: "Modelisation";
+//	//	parameter "Trained population" var: trained_population category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Batch_Model_2";
+//	}
+//
+//	reflex test
+//	{
+//		write "fin batch";
+//	}
+//
+//	// Camembert des morts par personnalité
+//	permanent
+//	{
+//		display Survivor_pie
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//	}
+//
+//}
+//
+///*=============================================
+//*         BATCH : Simulation 3 : Abris anti-feu
+//*=============================================*/
+//// repeat : 5 -> Nombre de répétitions
+//// keep_seed: false -> Ne pas garder la même graîne aléatoire pour chaque simulation
+//// parameter [...] "step : 5" -> Pour faire varier un attribut entre chaque simulation
+//experiment Batch_Model_3 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
+//{
+//
+//// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	//	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	parameter "Nb Abris" var: nb_bunker init: 7 category: "Agents" min: 0 max: 10;
+//	parameter "Personnalized msg" var: personalized_msg init: false category: "Modelisation";
+//	parameter "Trained population" var: trained_population init: true category: "Modelisation";
+//	//	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{
+//		simulation_name <- "Batch_Model_3";
+//	}
+//
+//	reflex test
+//	{
+//		write "fin batch";
+//	}
+//
+//	// Camembert des morts par personnalité
+//	permanent
+//	{
+//		display Survivor_pie
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//	}
+//
+//}
+//
+///*=============================================
+//*         Batch du Model 4 : Piquets de feu
+//*=============================================*/
+//experiment Batch_Model_4 type: batch repeat: 12 keep_seed: false until: fire_size <= 0
+//{
+//// Paramètres
+//	parameter "Start hour" var: starting_hour category: "Global" min: 0;
+//	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
+//	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
+//	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
+//	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
+//	parameter "Nb fireman" var: nb_fireman category: "Agents" min: 0;
+//	parameter "Nb Policeman" var: nb_policeman category: "Agents" min: 0;
+//	parameter "Tactical fireman" init: true  var: tactical_fireman category: "Modelisation";
+//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
+//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+//	init
+//	{		
+//		simulation_name <- "Batch_Model_4";
+//		tactical_fireman <- true;
+//	}
+//
+//	reflex test
+//	{
+//		write "fin batch";
+//	}
+//
+//	// Camembert des morts par personnalité
+//	permanent
+//	{
+//		display Survivor_pie
+//		{
+//			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+//			{
+//				data "Fire Size" value: fire_size / 50 color: # orange;
+//				data "Dead people" value: simulations collect length(every_resident where !each.alive) color: # red;
+//				data "People in alerte" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
+//				data "People in safe place" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
+//				data "Buildings damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
+//			}
+//
+//			// Camembert des survivants par personnalité
+//			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
+//			}
+//
+//			// Camembert des morts par personnalité
+//			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+//			{
+//				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
+//				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
+//				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
+//				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
+//				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
+//				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
+//				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
+//			}
+//
+//		}
+//
+//	}
+//
+//}
+//
+///*=======================================================
+//*      Exemple d'experience complète avec l'ensemble de paramètres disponibles    
+//*=======================================================*/
+////experiment Launch_Simulation_Model_B type: gui {
+////	
+////	// Boutons d'interaction
+////	action createFire{create fire_starter;}
+////	action createfireman{create fireman;}
+////	
+////	user_command Create_Fire action:createFire;
+////	user_command Create_FireMan action:createfireman;
+////	
+////	
+////	// Paramètres
+////	parameter "Start hour" var: starting_hour category: "Global" min:0;		
+////	parameter "Grid définition" var: grid_size category: "Global" min:100 max:300;	
+////	parameter "Wind" var: wind category: "Global" min:0.0 max:0.5;	
+////	parameter "Drought" var: drought category: "Global" min:0.0 max:0.5;
+////	parameter "Hurting distance" var: hurting_distance category: "Global" min:1.0 max:5.0;	
+////	parameter "Nb Bunker" var: nb_bunker <- 40 category: "Global" min:0;	
+////	
+////	parameter "Nb fireman" var:nb_fireman category: "Agents" min:0;
+////	parameter "Nb Policeman" var:nb_policeman category: "Agents" min:0;
+////	
+////	parameter "Personnalized msg" var: personalized_msg category: "Modelisation";
+////	parameter "Trained population" var: trained_population category: "Modelisation";
+////	parameter "Tactical fireman" var: tactical_fireman category: "Modelisation";	
+////	
+////	parameter "Isolated & Vulnerable" var:nb_isolated_and_vulnerable category: "Especes" min:0;
+////	parameter "Unaware reactors" var:nb_unaware_reactors category: "Especes" min:0;
+////	parameter "Threat avoiders" var:nb_threat_avoiders category: "Especes" min:0;
+////	parameter "Threat monitors" var:nb_threat_monitors category: "Especes" min:0;		
+////	parameter "Can do defenders" var:nb_can_do_defenders category: "Especes" min:0;
+////	parameter "Considered defenders" var:nb_considered_defenders category: "Especes" min:0;
+////	parameter "Livelihood defenders" var:nb_livelihood_defenders category: "Especes" min:0;
+////				
+////	output {
+////		
+////		// Valeurs monitorées
+////        monitor "Current_time" value: current_time ;
+////        monitor "Fire Size" value: fire_size;
+////        monitor "Resident alive" value: residents_alive;
+////        monitor "Dead resident" value: residents_dead;
+////        monitor "Alerted resident" value: residents_alert;
+////        monitor "Resident in safe place" value: residents_bunker;
+////	        
+////        // Visualisation graphique
+////		display Global {
+////			chart "Global" type: series{
+////				data "Fire Size" value: fire_size/50 color: #orange;
+////				
+////				data "Dead people" value: length(every_resident where !each.alive) color: #red;
+////				data "People in alerte" value: length(every_resident where each.on_alert) color: #yellow;
+////				data "People in safe place" value: length(every_resident where each.in_safe_place) color: #green;
+////			}
+////		}
+////			
+////		// Camembert des morts par personnalité
+////		display Dead_pie {
+////			chart "Camembert des morts par Personnalité" type:pie {
+////				data "can_do_defenders" value:length(can_do_defenders where !each.alive)  color:#green;
+////				data "considered_defenders" value:length(considered_defenders where !each.alive)  color:#darkgreen;
+////				data "livelihood_defenders" value:length(livelihood_defenders where !each.alive)  color:#lightgreen;
+////				data "threat_monitors" value:length(threat_monitors where !each.alive)  color:#purple;
+////				data "threat_avoiders" value:length(threat_avoiders where !each.alive)  color:#violet;
+////				data "unaware_reactors" value:length(unaware_reactors where !each.alive)  color:#cyan;
+////				data "isolated_and_vulnerable" value:length(isolated_and_vulnerable where !each.alive)  color:#blue;
+////			}
+////		}
+////		
+////		// Camembert des morts par personnalité
+////		display Survivor_pie {
+////			chart "Camembert des survivants par Personnalité" type:pie {
+////				data "can_do_defenders" value:length(can_do_defenders where each.alive)  color:#green;
+////				data "considered_defenders" value:length(considered_defenders where each.alive)  color:#darkgreen;
+////				data "livelihood_defenders" value:length(livelihood_defenders where each.alive)  color:#lightgreen;
+////				data "threat_monitors" value:length(threat_monitors where each.alive)  color:#purple;
+////				data "threat_avoiders" value:length(threat_avoiders where each.alive)  color:#violet;
+////				data "unaware_reactors" value:length(unaware_reactors where each.alive)  color:#cyan;
+////				data "isolated_and_vulnerable" value:length(isolated_and_vulnerable where each.alive)  color:#blue;
+////			}
+////		}
+////			
+////		
+////          // Visualisation 3D
+////		display map type: opengl {
+////           	species people aspect:sphere3D;   
+////			species road aspect: base; 
+////           	species resident aspect:sphere3D;  
+////           	species isolated_and_vulnerable aspect:sphere3D; 
+////           	species unaware_reactors aspect:sphere3D; 
+////           	species threat_avoiders aspect:sphere3D;
+////           	species threat_monitors aspect:sphere3D; 
+////           	species can_do_defenders  aspect:sphere3D; 
+////			species considered_defenders  aspect:sphere3D; 
+////			species livelihood_defenders aspect:sphere3D; 
+////           	species fireman aspect:sphere3D;  
+////           	species policeman aspect:sphere3D;    
+////			species waterway aspect: base refresh: false;
+////			grid plot transparency: 0.4;
+////			species fire_starter aspect: base ;
+////			species city_exit aspect: base transparency: 0.1;
+////			species building aspect: base ;
+////			species firewatch aspect: base ;
+////			light 1 color:(is_night ? 50 : 230);
+////		}  
+////			
+////	}
+//// 
+////}

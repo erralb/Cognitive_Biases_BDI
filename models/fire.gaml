@@ -50,5 +50,5 @@ species fire_starter control: simple_bdi
 	{
 		draw triangle(size) color: color depth: 5 # m;
 	}
-
+	
 }

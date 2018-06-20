@@ -10,10 +10,11 @@
 model Application_Fire_Model
 import "Application_Fire_Model.gaml"
 
-species people skills: [moving, fipa]  control: simple_bdi
+species people skills: [moving, fipa] control: simple_bdi
 {
 
-// Variables
+	// Physical attributes
+	int id <- 1;
 	int energy <- rnd(200, 255);
 	bool alive <- true;
 	point target;
@@ -23,12 +24,17 @@ species people skills: [moving, fipa]  control: simple_bdi
 	bool at_home;
 	bool at_work <- false;
 	bool in_safe_place <- false;
+	bool warning_sent <- false;
+	agent escape_target <- nil;
 	bool on_alert <- false;
 	bool fighting_fire <- false;
 	bool go_fighting <- false;
-	bool warning_sent <- false;
-	int id <- 1;
-	agent escape_target <- nil;
+	
+
+	// OLD BDI
+	list<string> desires <- nil;
+	string intention <- nil;
+	string belief <- "no_danger";
 
 	// Psychological attributes
 	int motivation; //higher motivation increases speed and defense capacity
@@ -37,43 +43,51 @@ species people skills: [moving, fipa]  control: simple_bdi
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
 
-	//Definition of the variables featured in the BDI architecture. ??USEFUL?
+	//Definition of the variables featured in the BDI architecture. ??USEFUL??
 	float plan_persistence <- 1.0; 
 	float intention_persistence <- 1.0;
 	bool probabilistic_choice <- true;
-
-	// OLD BDI
-	list<string> desires <- nil;
-	string intention <- nil;
-	string belief <- no_danger;
 	
 	//At the beginning, a person has no idea if there's a fire or if he's in danger
 	int belief_operator <- 50;
 	int subjective_probability <- 50;
 	int warnings_received <- 0;
 	
-	//Desires
-	predicate defend <- new_predicate("defend");
-	predicate call_for_help <- new_predicate("call_for_help");
-	predicate run_away <- new_predicate("run_away");
-	predicate be_on_alert <- new_predicate("on_alert"); //CB : Neglect of Probability?
-	
-	//Intention
-	predicate relaxing <- new_predicate("relaxing");
-	predicate working <- new_predicate("working");
-	predicate patrolling <- new_predicate("patrolling");
-	
     //Beliefs
+	predicate no_danger <- new_predicate("no_danger",true);
 	predicate potential_danger <- new_predicate("potential_danger",false);
 	predicate immediate_danger <- new_predicate("immediate_danger",false);
+	
+	//Desires
+	predicate go_to_work <- new_predicate("go_to_work");
+	predicate go_home <- new_predicate("go_home");
+	predicate call_911 <- new_predicate("call_911");
+	predicate run_away <- new_predicate("run_away");
+	predicate be_on_alert <- new_predicate("be_on_alert"); //CB : Neglect of Probability?
+	
+	//Intention
+	predicate working <- new_predicate("working");
+	predicate relaxing <- new_predicate("relaxing");
+	predicate calling_for_help <- new_predicate("calling_for_help");
+	predicate defending <- new_predicate("defending");
+	predicate escaping <- new_predicate("escaping");
 	
 	//if possibility_of_a_fire, the person is on alert
 	rule belief: potential_danger new_desire: be_on_alert strength: 50;
 	
-	//for most people, a fire means the want to escape. 
-	//These rule will change for different personnalities
-	rule belief: immediate_danger new_desire: run_away strength: 100;
+	//for most people, a fire means being on alert, escaping and calling 911
+	//These rule will change for different personnalities and situations
+	
+	rule belief: no_danger remove_desire: run_away;
+	rule belief: no_danger remove_desire: be_on_alert;
+	rule belief: no_danger remove_desire: call_911;
+	
+	rule belief: potential_danger new_desire: be_on_alert strength: 100;
+	rule belief: potential_danger new_desire: call_911 strength: 50;
+
 	rule belief: immediate_danger new_desire: be_on_alert strength: 100;
+	rule belief: immediate_danger new_desire: run_away strength: 100;
+	rule belief: immediate_danger new_desire: call_911 strength: 100;
 
 	// Init
 	init
@@ -88,39 +102,34 @@ species people skills: [moving, fipa]  control: simple_bdi
 		motivation <- training - fear_of_fire;
 		knowledge <- training - fear_of_fire;
 		
-		do add_intention(working);
-
 		// these attributes will be different for each personnalities
-
 	}
 
-	// Aspect
-	aspect sphere3D
+	// Graphic aspect
+	aspect sphere3D { draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color; }
+	
+	
+	action status (string msg)
 	{
-		draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color;
+		write string(self) + " : " + msg; 
+//		write "Plans : " + sample(get_plans);  //not working
+		write "Beliefs : " + get_beliefs(no_danger) + get_beliefs(potential_danger) + get_beliefs(immediate_danger); 
+		write "Desires : " + get_desires(go_to_work) + get_desires(go_home) + get_desires(call_911) + get_desires(run_away) + get_desires(be_on_alert); 
+		write "Intentions : " + get_intentions(working) + get_intentions(relaxing) + get_intentions(calling_for_help) + get_intentions(defending) + get_intentions(escaping); 
 	}
-
-	// Go home if alive, it's nighttime, not already at home, is not on alert, not fighting fire
-	reflex go_home when: is_night and alive and home != nil and !at_home and !on_alert and !(fighting_fire or go_fighting)
-//	plan go_home intention: relaxing when: is_night and alive and home != nil and !at_home and !on_alert and !(fighting_fire or go_fighting)
+	
+	// Go somewhere
+	// @params : destination (agent)
+	// @returns : boolean (reached destination or not)
+	action go_to (agent a)
 	{
-		if (bool(go_to(home)))
-		{
-			at_home <- true;
-			at_work <- false;
-		}
-	}
+		if (!(target overlaps a)) { target <- any_location_in(a); } // set target destination to agent location
 
-	// Go to work if alive, daytime, not already at work, not on alert, not fighting fire
-	// Aller au travail si : jourrnée, en vie, n'est pas déjà au travail, n'est pas en alerte, ne se dirige pas vers le feux pour le combattre
-	reflex go_to_work when: !is_night and alive and work != nil and !at_work and !on_alert and !(fighting_fire or go_fighting)
-//	plan go_to_work intention: working when: is_night and alive and home != nil and !at_home and !on_alert and !(fighting_fire or go_fighting)
-	{
-		if (bool(go_to(work)))
-		{
-			at_home <- false;
-			at_work <- true;
-		}
+		do goto target: target on: road_network; // move along roads
+
+		// reached destination
+		if (location = target) { return true; } 
+		else { return false; }
 	}
 	
 	
@@ -140,25 +149,6 @@ species people skills: [moving, fipa]  control: simple_bdi
 
 	}
 
-	//Perceives fire, give the alert -> === CB should influence decision =======
-	//If the he thinks the danger isn't real (or not)
-	perceive target:self when: alive and on_alert and !warning_sent {
-		write string(self) + " : potential_danger perceived ";
-		if(has_belief(potential_danger) or has_belief(immediate_danger) and risk_awareness > 2)
-		{
-			do send_msg([one_of(fireman where each.alive)], nil, 'Il y a un feu!');
-			warning_sent <- true;
-			belief <- potential_danger;
-		}
-	}
-	perceive target:fire_starter in: 50 when: alive {
-		write string(self) + " : Fire perceived at 50m ";
-		do add_belief(myself.potential_danger);
-	}
-	perceive target:fire_starter in: 10 when: alive {
-		write string(self) + " : Fire perceived at 10m ";
-		do add_belief(myself.immediate_danger);
-	}
 
 	//Send message to other agents
 	action send_msg (list<agent> main_recipients, list<agent> main_secondary, string msg)
@@ -382,34 +372,6 @@ species people skills: [moving, fipa]  control: simple_bdi
 	//====================== Fin action get_city_exit_opposed_to_fire ================================================
 
 
-	//======================  Début  action go_to ================================================
-	// Se déplacer vers une destination
-	// paramètre : agent destination
-	// return : bool: je suis arrivé
-	action go_to (agent a)
-	{
-
-	// Si la destination n'est celle de l'endroit passé en paramètre => on met à jour la destination
-		if (!(target overlaps a))
-		{
-		// je vai pas au bonne endroit
-			target <- any_location_in(a);
-		}
-
-		// Je me déplace vers ma destination sur le réseau routier
-		do goto target: target on: road_network;
-
-		// Je je suis arrivé , je renvois vraie
-		if (location = target)
-		{
-			return true;
-		} else
-		{
-			return false;
-		}
-
-	}
-	//====================== Fin action go_to ================================================
 
 	//======================  Début  action check_if_danger_is_near ================================================
 	// Regarder s'il existe un danger prche
