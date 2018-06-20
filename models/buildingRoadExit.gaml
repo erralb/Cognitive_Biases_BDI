@@ -31,7 +31,11 @@ species building schedules: [] frequency: 0
 	aspect base
 	{
 	// graded gray, turning to black as the building burns
-		draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
+//		draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
+//		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
+//		black depth: height;
+		
+		draw circle(5 # m) texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
 		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
 		black depth: height;
 	}
@@ -75,7 +79,7 @@ species road
 *=============================================*/
 species city_exit
 {
-	int nb_escaped_throw_me <- 0 update: length((every_resident_alive) at_distance 30 # m where (each.alive and each.in_safe_place));
+	int nb_escaped_through_me <- 0 update: length((every_resident_alive) at_distance 30 # m where (each.alive and each.in_safe_place));
 	init
 	{
 		nb_exit <- nb_exit + 1;
@@ -85,7 +89,7 @@ species city_exit
 	aspect base
 	{
 		draw circle(30 # m) color: # white depth: 1 # m border: # black;
-		draw string(nb_escaped_throw_me) color: # black size: 50 at: point(self.location.x - 1, self.location.y - 2, self.location.z + 5) depth: 2 # m;
+		draw string(nb_escaped_through_me) color: # black size: 50 at: point(self.location.x - 1, self.location.y - 2, self.location.z + 5) depth: 2 # m;
 	}
 
 }

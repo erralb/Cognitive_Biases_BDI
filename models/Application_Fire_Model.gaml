@@ -44,6 +44,7 @@ global
 	float drought <- 0.3; //niveau de secheresse
 	float hurting_distance <- 2.0 # m;
 	float field_of_view <- 15.0 # m;
+	
 	int nb_fireman <- 5;
 	int nb_bunker <- 0;
 	int nb_exit <- 0;
@@ -79,7 +80,7 @@ global
 //	int nb_considered_defenders <- 10;
 //	int nb_livelihood_defenders <- 10;
 
-	int nb_residents <- 20;
+	int nb_residents <- 100;
 	int nb_isolated_and_vulnerable <- 0;
 	int nb_unaware_reactors <- 0;
 	int nb_threat_avoiders <- 0;
@@ -155,8 +156,12 @@ global
 		}
 
 		// Création des feux de choisis
-		create fire_starter number: 1 with: [choosed_location::{ 170, 210 }];
-		create fire_starter number: 1 with: [choosed_location::{ 750, 300 }];
+//		create fire_starter number: 1 with: [choosed_location::{ 170, 210 }];
+//		create fire_starter number: 1 with: [choosed_location::{ 750, 300 }];
+		
+		create fire_starter number: 1 with: [choosed_location::{ 460, 173 }];
+		create fire_starter number: 1 with: [choosed_location::{ 130, 823 }];
+		create fire_starter number: 1 with: [choosed_location::{ 704, 770 }];
 
 		// Création des feux aléatoires
 		create fire_starter number: nb_fire_starter;
@@ -264,13 +269,13 @@ experiment Simulation_Model_1 type: gui
 	{
 
 	// Valeurs monitorées
-//		monitor "Current_time" value: current_time;
-//		monitor "Fire Size" value: fire_size;
-//		monitor "Resident alive" value: residents_alive;
-//		monitor "Dead resident" value: residents_dead;
-//		monitor "Alerted resident" value: residents_alert;
-//		monitor "Resident in safe place" value: residents_bunker;
-//		monitor "Buildings damage" value: buildings_damage color: #grey;
+		monitor "Current_time" value: current_time;
+		monitor "Fire Size" value: fire_size;
+		monitor "Resident alive" value: residents_alive;
+		monitor "Dead resident" value: residents_dead;
+		monitor "Alerted resident" value: residents_alert;
+		monitor "Resident in safe place" value: residents_bunker;
+		monitor "Buildings damage" value: buildings_damage color: #grey;
 
 //		// Visualisation graphique
 //		display Global

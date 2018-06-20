@@ -15,14 +15,14 @@ import "Application_Fire_Model.gaml"
 grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: false use_individual_shapes: false  control: simple_bdi
 {
 
-// Variables
+// 	Variables
+	int id <- 1;
 	rgb color <- # white;
 	bool flammable <- false;
 	bool burning <- false;
 	float flame_tilt <- wind + rnd(0.2);
 	float heat <- 0.0;
 	int life <- rnd(90, 100);
-	int id <- 1;
 	bool is_road <- false;
 	bool is_building <- false;
 
@@ -57,37 +57,19 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 
 	}
 	
-//	//way too slow, which I do not understand
-//	perceive target: resident in: 50 when: burning  {
-//		if(not has_belief(immediate_danger) and flip(probability_to_react) and not in_safe_place)
-//		{
-//			do add_belief(immediate_danger, 100.0);
-//			do add_desire(run_away);
-//			do add_intention(escaping); 
-//			escape_target <- get_closest_safe_place();
-//			do status("Perceived fire");
-//		}
-//	}
 
-	// Si le plot brûle
+	// When burning, it will decrease people and building's energy around
 	reflex burn when: burning
 	{
+		color <- rgb(1 among [# orange, # red]); // Fire animation
 
-	// Animation du feu :
-		color <- rgb(1 among [# orange, # red]);
-
-		// Répèrcution du plot en feu (tous 10 cycles)
-//		if ((cycle + id) mod 10 = 0)
-		if ((cycle + id) mod 1 = 0)
+		if ((cycle + id) mod 10 = 0) //act only every 10 cycle for slower burning
+//		if ((cycle + id) mod 1 = 0)
 		{
 
-		// Dommages sur les personnes trop proches :
-		//===========================
-
-		// Récupération des plots à distance de dangeureuse
 			list<plot> plot_at_hurting_distance <- self neighbors_at hurting_distance;
 
-			// Récupération de la listes des résidents et des pompiers vivant se trouvant sur ces plots
+			// get victims
 			list<people> victims;
 			loop pl over: plot_at_hurting_distance
 			{
@@ -103,20 +85,22 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			// Dommages
 			loop victim over: victims
 			{
-			// Dégats : -30 à 1m du feu, -15 à 2 m, -10 à 3m
-				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
+				// Dammage : - 30 at 1m,  -15 at 2 m,  -10 at 3m
+//				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
+				victim.energy <- victim.energy - 30;
+//				write string(victim.energy);
+				
 				victim.on_alert <- true;
-				// Les résidents touchés par le feu sont ralentis
+				// burned people are slowed down
 				if (string(victim) contains "resident")
 				{
 					victim.speed <- victim.speed - rnd(0, 0.3);
 				}
-				// La personne n'ayant plus d'energie meurt
+				// no more energy, person's dead
 				if (victim.energy <= 0)
 				{
 					victim.alive <- false;
 				}
-
 			}
 
 			// Domages sur les buildings :
@@ -131,7 +115,6 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 
 			// Propagation du feu :
 			//==============
-			// TODO les routes ne brûlent pas encore...
 			// Récupération des plots voisins qui sont : non en feu, non brûlés.
 			
 			list<plot> neighbors_plot <- neighbors where (!each.burning and each.life > 0);
