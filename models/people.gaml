@@ -44,28 +44,6 @@ species people skills: [moving, fipa] control: simple_bdi
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
 
-	//Definition of the variables featured in the BDI architecture. ??USEFUL??
-	float plan_persistence <- 1.0; 
-	float intention_persistence <- 1.0;
-	bool probabilistic_choice <- false;
-	
-	//At the beginning, a person has no idea if there's a fire or if he's in danger
-	int belief_operator <- 50;
-	int subjective_probability <- 50;
-	int warnings_received <- 0;
-	
-    //Beliefs
-	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
-	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
-	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
-	predicate can_defend_belief <- new_predicate("can_defend_belief",true); //CB : Neglect of Probability?
-	
-	//Desires
-	predicate work_desire <- new_predicate("work_desire",10);
-	predicate home_desire <- new_predicate("home_desire",20);
-	predicate call_911_desire <- new_predicate("call_911_desire",30);
-	predicate defend_desire <- new_predicate("defend_desire",40);
-	predicate escape_desire <- new_predicate("escape_desire",50);
 	
 //	//Intention
 //	predicate work_intention <- new_predicate("work_intention");

@@ -16,11 +16,29 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 {
 
 	// Variables
-	int nb_of_warning_msg <- 0;
 	bool warned <- false;
 	bool evacuating <- false;
 	bool is_escorted <- false;
-	float probability_to_react <- 0.20;
+	
+	//Definition of the variables featured in the BDI architecture. ??USEFUL??
+	float plan_persistence <- 1.0; 
+	float intention_persistence <- 1.0;
+	bool probabilistic_choice <- false;
+	
+	
+    //Beliefs
+	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
+	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
+	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
+	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
+	predicate can_defend_belief <- new_predicate("can_defend_belief",true); //CB : Neglect of Probability?
+	
+	//Desires
+	predicate work_desire <- new_predicate("work_desire",10);
+	predicate home_desire <- new_predicate("home_desire",20);
+	predicate call_911_desire <- new_predicate("call_911_desire",30);
+	predicate defend_desire <- new_predicate("defend_desire",40);
+	predicate escape_desire <- new_predicate("escape_desire",50); //desire to escape is the equal to the desire to shelter
 	
 //	//The rules are used to create a desire from a belief. We can specify the priority of the desire with a statement priority.
 	rule belief: no_danger_belief new_desire: work_desire strength: 10.0 remove_desire: escape_desire;
@@ -37,20 +55,20 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		at_home <- true;
 		work <- one_of(building where (each != home and !each.bunker and !each.fire_station and !each.police_station));
 		
-		escape_target <- (city_exit closest_to location);
-		
 		color <- rgb(0, energy, 0);
 		
-		motivation <- max([0, rnd(3, 5) + motivation]); // Très motivé
-		risk_awareness <- max([0, rnd(1, 3) + risk_awareness]); // Pas forcément conscient des risques
-		knowledge <- max([0, rnd(4, 5) + knowledge]); // Expérimentés et compétents,
+		// Default resident has the threat_avoiders attributes
+		escape_target <- get_closest_safe_place();
+		motivation <- max([0, rnd(2, 3) + motivation]); // Motivation moyenne
+		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); //  Conscients du risque
+		knowledge <- max([0, rnd(3, 5) + knowledge]); // Bonne connaissances
 		
 		//Default :  no danger and go to work
 		do add_belief(no_danger_belief);
 		
-//		do status("init");
+		//do status("init");
 		
-//		//Most of them are going to work, the rest stays at home
+ 		//Most of them are going to work, the rest stays at home
 		if(flip(0.8))
 		{
 			do add_desire(work_desire);
@@ -66,6 +84,81 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	reflex color
 	{
 		color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, 0);
+	}
+	
+	
+	//Cognitive Biases
+	//Will be about the belief the person thinks it's in danger or not
+	
+	//Around the time of the Black Saturday, the risk of bushfire is high
+	//We assume the agent is totally unsure if there's a fire or not
+	
+	//Whether the agent's choices will be influenced or not by the cognitive biases algorithms
+	bool neglect_of_probability_cb_influence <- false;
+	bool semmelweis_reflex_cb_influence <- false;
+	bool illusory_truth_effect_cb_influence <- false;
+
+	float probability_to_react <- 0.70;
+	int nb_of_warning_msg <- 0;
+	
+	//Cognitive Bias : Neglect of probability
+	//Will influence the agent's decisions on going home or escaping
+	action neglect_of_probability(float perceivedProbability)
+	{
+		float ancientBeliefProbability <- probability_to_react;
+		float newBeliefProbability <- probability_to_react + perceivedProbability;
+		
+		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
+		
+		
+		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
+		{
+			newBeliefProbability <- 0.0;
+		}
+		else if( newBeliefProbability  < 0.34 and (risk_awareness > 3 or knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
+		{
+			newBeliefProbability <- 0.9;
+		}
+		else if( newBeliefProbability  > 0.34 ) //3 under-estimate a high and medium probability of something happening
+		{
+			newBeliefProbability <- 0.2;
+		}
+		
+		probability_to_react <- newBeliefProbability;
+	}
+	
+	
+	//Cognitive Bias : Semmelweis Reflex : Clinging to a belief
+	//Will influence the agent's belief on no / potential / immediate danger : Should I keep my belief/certainty?
+	action semmelweis_reflex(float beliefProbability)
+	{
+		if (beliefProbability = 0 and nb_of_warning_msg < 2) //he does not believe the danger will occur, I keep my belief 
+		{
+			return true;
+		}
+		else if (beliefProbability > 0 and nb_of_warning_msg > 2) //I started to believe, I should change my certainty
+		{
+			return false;
+		}
+	}
+	
+	
+	//Cognitive Illusory Truth effect
+	//Will re-inforce agent's belief
+	// "Info" = no / potential / immediate danger
+	// "nb of occurences" = received_warnings
+	action illusory_truth_effect(predicate beliefName, float perceivedProbability)
+	{
+		if( ! has_belief(beliefName) )
+		{
+			do add_belief(beliefName, perceivedProbability);
+		}
+		else //reinforce belief strength
+		{
+			float illusoryProbability <- perceivedProbability * nb_of_warning_msg;
+			do remove_belief(beliefName);
+			do add_belief(beliefName, illusoryProbability);
+		}
 	}
 	
 	// Resident received message
