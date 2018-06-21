@@ -60,11 +60,11 @@ species fireman parent: people
 	reflex recieve_call when: !(empty(proposes))
 	{
 		message info <- proposes at 0;
-		write (info.contents[0]);
 		// Si c'est un alerte au feux
-		if (info.contents[0] = "Il y a un feu!" and !on_alert)
+		if (info.contents[0] = "There's a fire" and !on_alert)
 		{
-		// Accépter l'intervention
+			write ("Fireman called received : "+info.contents[0]);
+			// Accépter l'intervention
 			do accept_proposal(message: info, contents: ['OK!']);
 			on_alert <- true;
 
@@ -78,7 +78,7 @@ species fireman parent: people
 
 	}
 
-	// Fin de l'alerte au feu si : taille du feu nulle
+	// Fires extinguished si : taille du feu nulle
 	reflex stop_fighting when: alive and (go_fighting or fighting_fire) and fire_size <= 0
 	{
 		if (first(fireman where each.alive) = self)
@@ -86,9 +86,9 @@ species fireman parent: people
 			//write "stop_fighting";
 			do save_result;
 			do_pause <- true;
-			//do start_conversation ( to : list(policeman where each.alive), protocol : 'fipa-propose', performative : 'propose', contents : ['Feu éteind'] );
-			do send_msg(list(policeman where each.alive), every_resident_alive, "Fin de l'alerte au feu");
-			write "Fin de l'alerte au feu";
+			//do start_conversation ( to : list(policeman where each.alive), protocol : 'fipa-propose', performative : 'propose', contents : ['Fires extinguished'] );
+			do send_msg(list(policeman where each.alive), every_resident_alive, "Fires extinguished");
+			write "Fires extinguished";
 		}
 
 		go_fighting <- false;
@@ -234,8 +234,8 @@ species fireman parent: people
 		// Demander à la police une évacution de la ville
 		if (fire_size > fire_uncontrollable and !evacution_city_reported and first(fireman where each.alive) = self)
 		{
-		// do start_conversation ( to : list(policeman where each.alive), protocol : 'fipa-propose', performative : 'propose', contents : ['Evacuer les residents de la ville!'] );
-			do send_msg(list(policeman where each.alive), every_resident_alive, 'Evacuer les residents de la ville!');
+		// do start_conversation ( to : list(policeman where each.alive), protocol : 'fipa-propose', performative : 'propose', contents : ['General evacuation required'] );
+			do send_msg(list(policeman where each.alive), every_resident_alive, 'General evacuation required');
 			evacution_city_reported <- true;
 		}
 
@@ -247,7 +247,7 @@ species fireman parent: people
 		// Appelle des renforts si le feux est toujours incontrolable, tous les 100 cycles (appel de 10 pompier)
 		if (fire_size > fire_uncontrollable and first(fireman where each.alive) = self)
 		{
-			write string(self) + " : Feux toujours incontrolable, on a besoin d'aide";
+			write string(self) + " : Incontrollable fires, we need reinforcements";
 			create fireman number: 10;
 		}
 

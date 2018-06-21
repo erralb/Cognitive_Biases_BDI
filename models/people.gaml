@@ -16,7 +16,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	// Physical attributes
 	int id <- 1;
 //	int energy <- rnd(200, 255);
-	int energy <- 200;
+	float energy <- 200.0;
 	bool alive <- true;
 	point target;
 	rgb color <- # green;
@@ -56,40 +56,41 @@ species people skills: [moving, fipa] control: simple_bdi
 	
     //Beliefs
 	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
-	predicate potential_danger_belief <- new_predicate("potential_danger_belief",false);
-	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",false);
+	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
+	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
+	predicate can_defend_belief <- new_predicate("can_defend_belief",true); //CB : Neglect of Probability?
 	
 	//Desires
-	predicate work_desire <- new_predicate("work_desire");
-	predicate home_desire <- new_predicate("home_desire");
-	predicate call_911_desire <- new_predicate("call_911_desire");
-	predicate escape_desire <- new_predicate("escape_desire");
-	predicate on_alert_desire <- new_predicate("on_alert_desire"); //CB : Neglect of Probability?
+	predicate work_desire <- new_predicate("work_desire",10);
+	predicate home_desire <- new_predicate("home_desire",20);
+	predicate call_911_desire <- new_predicate("call_911_desire",30);
+	predicate defend_desire <- new_predicate("defend_desire",40);
+	predicate escape_desire <- new_predicate("escape_desire",50);
 	
-	//Intention
-	predicate work_intention <- new_predicate("work_intention");
-	predicate home_intention <- new_predicate("home_intention");
-	predicate relax_intention <- new_predicate("relax_intention");
-	predicate call_911_intention <- new_predicate("call_911_intention", true);
-	predicate defend_intention <- new_predicate("defend_intention");
-	predicate escape_intention <- new_predicate("escape_intention");
+//	//Intention
+//	predicate work_intention <- new_predicate("work_intention");
+//	predicate home_intention <- new_predicate("home_intention");
+//	predicate relax_intention <- new_predicate("relax_intention");
+//	predicate call_911_intention <- new_predicate("call_911_intention", true);
+//	predicate defend_intention <- new_predicate("defend_intention");
+//	predicate escape_intention <- new_predicate("escape_intention");
 	
-	//if possibility_of_a_fire, the person is on alert
-	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 50;
-	
-	//for most people, a fire means being on alert, escape_intention and calling 911
-	//These rule will change for different personnalities and situations
-	
-	rule belief: no_danger_belief remove_desire: escape_desire;
-	rule belief: no_danger_belief remove_desire: on_alert_desire;
-	rule belief: no_danger_belief remove_desire: call_911_desire;
-	
-	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 100;
-	rule belief: potential_danger_belief new_desire: call_911_desire strength: 50;
-
-	rule belief: immediate_danger_belief new_desire: on_alert_desire strength: 100;
-	rule belief: immediate_danger_belief new_desire: escape_desire strength: 100;
-	rule belief: immediate_danger_belief new_desire: call_911_desire strength: 100;
+//	//if possibility_of_a_fire, the person is on alert
+//	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 50;
+//	
+//	//for most people, a fire means being on alert, escape_intention and calling 911
+//	//These rule will change for different personnalities and situations
+//	
+//	rule belief: no_danger_belief remove_desire: escape_desire;
+//	rule belief: no_danger_belief remove_desire: on_alert_desire;
+//	rule belief: no_danger_belief remove_desire: call_911_desire;
+//	
+//	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 100;
+//	rule belief: potential_danger_belief new_desire: call_911_desire strength: 50;
+//
+//	rule belief: immediate_danger_belief new_desire: on_alert_desire strength: 100;
+//	rule belief: immediate_danger_belief new_desire: escape_desire strength: 100;
+//	rule belief: immediate_danger_belief new_desire: call_911_desire strength: 100;
 
 	// Init
 	init
@@ -115,6 +116,10 @@ species people skills: [moving, fipa] control: simple_bdi
 	{
 		write string(self) + " ("+energy+") : " + msg; 
 ////		write "Plans : " + sample(get_plans);  //not work_intention
+		write "B:" + length(belief_base) + ":" + belief_base; 
+		write "D:" + length(desire_base) + ":" + desire_base; 
+		write "I:" + length(intention_base) + ":" + intention_base; 
+		
 //		write "Beliefs : " + get_beliefs(no_danger_belief) + get_beliefs(potential_danger_belief) + get_beliefs(immediate_danger_belief); 
 //		write "Desires : " + get_desires(work_desire) + get_desires(home_desire) + get_desires(call_911_desire) + get_desires(escape_desire) + get_desires(on_alert_desire); 
 //		write "Intentions : " + get_intentions(work_intention) + get_intentions(relax_intention) + get_intentions(call_911_intention) + get_intentions(defend_intention) + get_intentions(escape_intention); 
@@ -161,6 +166,7 @@ species people skills: [moving, fipa] control: simple_bdi
 		}
 		if (!empty(main_recipients))
 		{
+//			write "911 conversation started";
 			do start_conversation(to: main_recipients, protocol: 'fipa-propose', performative: 'propose', contents: [msg]);
 		}
 

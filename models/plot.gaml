@@ -61,10 +61,11 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 	// When burning, it will decrease people and building's energy around
 	reflex burn when: burning
 	{
-		color <- rgb(1 among [# orange, # red]); // Fire animation
+//		color <- rgb(1 among [# orange, # red]); // Fire animation
+		color <- # red; // Fire color
 
 		if ((cycle + id) mod 10 = 0) //act only every 10 cycle for slower burning
-//		if ((cycle + id) mod 1 = 0)
+//		if ((cycle + id) mod 2 = 0)
 		{
 
 			list<plot> plot_at_hurting_distance <- self neighbors_at hurting_distance;
@@ -86,8 +87,8 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			loop victim over: victims
 			{
 				// Dammage : - 30 at 1m,  -15 at 2 m,  -10 at 3m
-//				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
-				victim.energy <- victim.energy - 30;
+				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
+//				victim.energy <- victim.energy - 30;
 //				write string(victim.energy);
 				
 				victim.on_alert <- true;

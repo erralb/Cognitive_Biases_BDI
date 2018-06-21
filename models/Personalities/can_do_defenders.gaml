@@ -41,9 +41,9 @@ species can_do_defenders parent: resident control: simple_bdi
 		risk_awareness <- max([0, rnd(1, 3) + risk_awareness]); // Pas forcément conscient des risques
 		knowledge <- max([0, rnd(4, 5) + knowledge]); // Expérimentés et compétents,
 		
-		do add_belief(no_danger_belief);
-		do add_desire(work_desire);
-		do add_intention(work_intention);
+//		do add_belief(no_danger_belief);
+//		do add_desire(work_desire);
+//		do add_intention(work_intention);
 	}
 
 	// Relexe : Couleur
@@ -94,8 +94,8 @@ species can_do_defenders parent: resident control: simple_bdi
 //
 //		}
 //
-//		// Si c'est la fin de l'alerte au feu
-//		if (info.contents[0] = "Fin de l'alerte au feu")
+//		// Si c'est la Fires extinguished
+//		if (info.contents[0] = "Fires extinguished")
 //		{
 //		// Accépter le message et retour à l'état normal
 //			do accept_proposal(message: info, contents: ['OK!']);

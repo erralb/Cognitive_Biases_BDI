@@ -42,19 +42,22 @@ global
 	string current_time update: string(current_hour) + "h" + string(current_min); //temps actuel
 	float wind <- 0.2; //force du vent
 	float drought <- 0.3; //niveau de secheresse
-	float hurting_distance <- 2.0 # m;
+	float hurting_distance <- 5.0 # m;
 	float field_of_view <- 15.0 # m;
 	
-	int nb_fireman <- 5;
+	int nb_fireman <- 8;
 	int nb_bunker <- 0;
 	int nb_exit <- 0;
 	int nb_fire_station <- 1;
 	int nb_police_station <- 1;
-	int nb_policeman <- 2;
+	int nb_policeman <- 4;
+	
 	int nb_fire_starter <- 0;
 	int nb_residents_w_answered_1st_call <- 0;
 	int fire_size <- 1 update: length(plot where (each.burning = true));
-	int fire_uncontrollable <- 600;
+//	int fire_uncontrollable <- 600;
+	int fire_uncontrollable <- 200;
+	int evacuation_reminder_cycle <- 300;
 	bool result_saved <- false;
 	bool do_pause <- false;
 	string simulation_name <- "Simulation 1";
@@ -103,7 +106,7 @@ global
 	int ids <- 1;
 	bool evacution_city_reported <- false;
 	list<resident> every_resident <- nil update: isolated_and_vulnerable union unaware_reactors union threat_avoiders union threat_monitors union can_do_defenders union
-	considered_defenders union livelihood_defenders;
+	considered_defenders union livelihood_defenders union resident;
 	list<resident> every_resident_alive <- nil update: every_resident where each.alive;
 	list<people> every_people_alive <- nil update: every_resident_alive + (fireman + policeman) where each.alive;
 	graph road_network;
@@ -156,12 +159,13 @@ global
 		}
 
 		// Création des feux de choisis
-//		create fire_starter number: 1 with: [choosed_location::{ 170, 210 }];
-//		create fire_starter number: 1 with: [choosed_location::{ 750, 300 }];
+		create fire_starter number: 1 with: [choosed_location::{ 170, 210 }];
+		create fire_starter number: 1 with: [choosed_location::{ 750, 300 }];
 		
-		create fire_starter number: 1 with: [choosed_location::{ 460, 173 }];
-		create fire_starter number: 1 with: [choosed_location::{ 130, 823 }];
-		create fire_starter number: 1 with: [choosed_location::{ 704, 770 }];
+//		create fire_starter number: 1 with: [choosed_location::{ 460, 173 }];
+//		create fire_starter number: 1 with: [choosed_location::{ 130, 823 }];
+//		create fire_starter number: 1 with: [choosed_location::{ 704, 770 }];
+		create fire_starter number: 1 with: [choosed_location::{ 420, 550 }];
 
 		// Création des feux aléatoires
 		create fire_starter number: nb_fire_starter;

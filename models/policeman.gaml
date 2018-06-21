@@ -29,7 +29,8 @@ species policeman parent: people
 	// Init
 	init
 	{
-		speed <- rnd(20.0, 25.0) # km / # h;
+//		speed <- rnd(20.0, 25.0) # km / # h;
+		speed <- 50 # km / # h;
 		energy <- rnd(2000, 2550);
 		color <- # blue;
 		home <- one_of(building where (!each.bunker and !each.fire_station and !each.police_station));
@@ -58,27 +59,24 @@ species policeman parent: people
 		message info <- proposes at 0;
 		string msg <- info.contents[0];
 
-		// Si le feu a été éteind
-		if (msg contains "Fin de l'alerte au feu")
+		if (msg contains "Fires extinguished")
 		{
-		// Accépter le message et prévenire les résidents
 			do accept_proposal(message: info, contents: ['OK!']);
 			if (first(policeman where each.alive) = self)
 			{
-			// do start_conversation ( to : list(every_resident_alive), protocol : 'fipa-propose', performative : 'propose', contents : ['Fin de l\'alerte au feu'] );
-				do send_msg(list(every_resident_alive), nil, "Fin de l'alerte au feu");
+				// do start_conversation ( to : list(every_resident_alive), protocol : 'fipa-propose', performative : 'propose', contents : ['Fin de l\'alerte au feu'] );
+				do send_msg(list(every_resident_alive), nil, "Fires extinguished");
 			}
 
 			on_alert <- false;
 			warning_sent <- false;
 		}
 
-		// S'il faut évacuer la ville
-		if (msg contains "Evacuer les residents de la ville!")
+		if (msg contains "General evacuation required")
 		{
-		// Accépter le message et prévenire les résidents d'évacuer
+			// Accépter le message et prévenire les résidents d'évacuer
 			do accept_proposal(message: info, contents: ['OK!']);
-			string msg <- 'Allez dans un bunker!';
+			string msg <- 'Go to shelter';
 			at_work <- false;
 			at_home <- false;
 			on_alert <- true;
@@ -89,7 +87,7 @@ species policeman parent: people
 			// Un seul policier envoie le message d'évacuation
 			if (first(policeman where each.alive) = self)
 			{
-				write "La police demande une évacuation générale";
+				write "Police is asking for general evacuation";
 				// do start_conversation ( to : list(every_resident_alive),  protocol : 'fipa-propose', performative : 'propose', contents : [msg] );
 				do send_msg(every_resident_alive, nil, msg);
 			}
@@ -98,13 +96,13 @@ species policeman parent: people
 
 	}
 
-	// Tout les 1000 cycles, les policier relance l'ordre d'évacution.
-	reflex inform_people when: alive and on_alert and fire_size > fire_uncontrollable and (cycle mod 1000 = 0)
+	// Every evacuation_reminder_cycle cycles, send evacuation reminder
+	reflex inform_people when: alive and on_alert and fire_size > fire_uncontrollable and (cycle mod evacuation_reminder_cycle = 0)
 	{
 		if (first(policeman where each.alive) = self)
 		{
-			write string(self) + " : Rappel d'évacutaion!";
-			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, 'Allez dans un bunker!');
+			write string(self) + " : Evacuation reminder";
+			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, 'Go to shelter');
 		}
 
 	}
@@ -120,7 +118,7 @@ species policeman parent: people
 			if (length(residant_who_have_asked_help) > 0)
 			{
 				resident_to_help <- residant_who_have_asked_help closest_to self;
-				write (string(self) + " : Je vais aider " + resident_to_help);
+				write (string(self) + " : I'm going to help " + resident_to_help);
 				remove resident_to_help from: residant_who_have_asked_help;
 			} else
 			{
@@ -129,7 +127,7 @@ species policeman parent: people
 				{
 					resident_to_help <- people_to_warn closest_to self;
 					remove resident_to_help from: people_to_warn;
-					write (string(self) + " : Je vais aider " + resident_to_help);
+					write (string(self) + " : I'm going to help " + resident_to_help);
 				}
 
 			}
@@ -152,7 +150,7 @@ species policeman parent: people
 					resident_to_help.on_alert <- true;
 					escorted_res <- resident_to_help;
 					remove resident_to_help from: residant_who_have_asked_help;
-					write "J'escorte " + escorted_res + " vers " + escape_target;
+					write "I'm escorting " + escorted_res + " to " + escape_target;
 				} else
 				{
 				// Si c'est pas une personne à escorter
@@ -163,11 +161,11 @@ species policeman parent: people
 						resident_to_help.on_alert <- true;
 						resident_to_help.evacuating <- true;
 						resident_to_help.speed <- resident_to_help.speed + motivation;
-						write "le résident évacue";
+						write "the resident evacuates";
 					} else
 					{
 						resident_to_help.warned <- true;
-						write "le résident ne veux PAS évacuer";
+						write "the resident doesn't want to evacuate";
 					}
 
 					resident_to_help <- nil;
@@ -209,10 +207,10 @@ species policeman parent: people
 		{
 
 		// Si je ne suis toujours pas arrivé
-		// Je dis à la personne que j'escorte de me suivre
+		// Je dis à la personne que I'm escorting de me suivre
 			escorted_res.location <- { location.x + 3, location.y };
 
-			// Si le résident que j'escorte est mort, je change de cicle
+			// Si le résident que I'm escorting est mort, je change de cicle
 			if (!escorted_res.alive)
 			{
 				escorting <- false;
