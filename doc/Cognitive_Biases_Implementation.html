@@ -41,6 +41,13 @@
     <h3>Around the time of the Black Saturday, the risk of bushfire is high. We assume the agent is at a 70% belief that there will be a fire</h3>
     
     <pre>
+    // Psychological attributes
+    int motivation; //higher motivation increases speed and defense capacity
+    int risk_awareness; //higher awareness will increase response to messages and escape_intention
+    int knowledge; //level of knowledge crisis management and technical abilities -> should influend cognitive biases
+    int training; //level of training will influence the three previous values
+    int fear_of_fire <- rnd(0, 1); //will influence decision making 
+    
     //Whether the agent's choices will be influenced or not by the cognitive biases algorithms
     bool neglect_of_probability_cb_influence <- false;
     bool semmelweis_reflex_cb_influence <- false;
@@ -55,7 +62,6 @@
     <pre>
     action neglect_of_probability(float perceivedProbability)
     {
-        float ancientBeliefProbability <- probability_to_react;
         float newBeliefProbability <- probability_to_react + perceivedProbability;
         
         if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
@@ -99,7 +105,7 @@
     <h3>Cognitive Illusory Truth effect</h3>
     <h4>
     Will re-inforce agent's belief<br/>
-    "Info" = no / potential / immediate danger<br/>
+    "beliefName" = no / potential / immediate danger<br/>
     "nb of occurences" = received_warnings</h4>
 
     <pre>

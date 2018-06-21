@@ -35,7 +35,6 @@ species person control: simple_bdi
 	//Will influence the agent's decisions on going home or escaping
 	action neglect_of_probability(float perceivedProbability)
 	{
-		float ancientBeliefProbability <- probability_to_react;
 		float newBeliefProbability <- probability_to_react + perceivedProbability;
 		
 		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
@@ -75,7 +74,7 @@ species person control: simple_bdi
 	
 	//Cognitive Illusory Truth effect
 	//Will re-inforce agent's belief
-	// "Info" = no / potential / immediate danger
+	// "beliefName" = no / potential / immediate danger
 	// "nb of occurences" = received_warnings
 	action illusory_truth_effect(predicate beliefName, float perceivedProbability)
 	{

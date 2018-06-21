@@ -14,7 +14,6 @@ import "Application_Fire_Model.gaml"
 *=============================================*/
 species resident parent: people skills: [moving, fipa] control: simple_bdi
 {
-
 	// Variables
 	bool warned <- false;
 	bool evacuating <- false;
@@ -25,6 +24,16 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	float intention_persistence <- 1.0;
 	bool probabilistic_choice <- false;
 	
+	float probability_to_react <- 0.70;
+	int nb_of_warning_msg <- 0;
+	
+	//Cognitive Biases
+	//Whether the agent's choices will be influenced or not by the cognitive biases algorithms
+	bool cognitive_biases_influence <- false;
+	bool neglect_of_probability_cb_influence <- false;
+	bool semmelweis_reflex_cb_influence <- false;
+	bool illusory_truth_effect_cb_influence <- false;
+
 	
     //Beliefs
 	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
@@ -49,10 +58,9 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	init
 	{
 		speed <- rnd(13.0, 18.0) # km / # h;
-//		speed <- rnd(30.0, 50.0) # km / # h;
+//		speed <- rnd(30.0, 50.0) # km / # h; //to fast they never die
 		home <- one_of(building where (!each.bunker and !each.fire_station and !each.police_station));
-		location <- any_location_in(home);
-		at_home <- true;
+//		location <- any_location_in(home);
 		work <- one_of(building where (each != home and !each.bunker and !each.fire_station and !each.police_station));
 		
 		color <- rgb(0, energy, 0);
@@ -63,27 +71,47 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); //  Conscients du risque
 		knowledge <- max([0, rnd(3, 5) + knowledge]); // Bonne connaissances
 		
-		//Default :  no danger and go to work
-		do add_belief(no_danger_belief);
+		//Default :  no danger
+		do add_belief(no_danger_belief,0.5);
 		
 		//do status("init");
 		
- 		//Most of them are going to work, the rest stays at home
+ 		//80% are at work, the rest stays at home, doesn't really matter
+ 		//we place them right away, it avoids waiting for them to drive to their work place
 		if(flip(0.8))
 		{
-			do add_desire(work_desire);
+//			do add_desire(work_desire);
+			location <- any_location_in(work);
+			at_work <- true;
+			at_home <- false;
 		}
 		else
 		{
-			do add_desire(home_desire);
+//			do add_desire(home_desire);
+			location <- any_location_in(home);
+			at_home <- true;
+			at_work <- false;
+		}
+		
+		if(use_cognitive_biases)
+		{
+			//Randomly distribute Cognitive Biases
+			if(flip(0.2)) { neglect_of_probability_cb_influence <- true; cognitive_biases_influence <- true; }
+			if(flip(0.2)) { semmelweis_reflex_cb_influence <- true; cognitive_biases_influence <- true; }
+			if(flip(0.2)) { illusory_truth_effect_cb_influence <- true; cognitive_biases_influence <- true; }
 		}
 		
 	}
 
 	// Relexe : Couleur
-	reflex color
+	reflex color { color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, 0); }
+		
+	action status (string msg)
 	{
-		color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, 0);
+		write string(self) + " ("+energy+") : " + msg; 
+		write "B:" + length(belief_base) + ":" + belief_base; 
+		write "D:" + length(desire_base) + ":" + desire_base; 
+		write "I:" + length(intention_base) + ":" + intention_base; 
 	}
 	
 	
@@ -93,23 +121,17 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	//Around the time of the Black Saturday, the risk of bushfire is high
 	//We assume the agent is totally unsure if there's a fire or not
 	
-	//Whether the agent's choices will be influenced or not by the cognitive biases algorithms
-	bool neglect_of_probability_cb_influence <- false;
-	bool semmelweis_reflex_cb_influence <- false;
-	bool illusory_truth_effect_cb_influence <- false;
-
-	float probability_to_react <- 0.70;
-	int nb_of_warning_msg <- 0;
 	
 	//Cognitive Bias : Neglect of probability
 	//Will influence the agent's decisions on going home or escaping
 	action neglect_of_probability(float perceivedProbability)
 	{
-		float ancientBeliefProbability <- probability_to_react;
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
+//		float ancientBeliefProbability <- probability_to_react;
 		float newBeliefProbability <- probability_to_react + perceivedProbability;
 		
 		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
-		
 		
 		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
 		{
@@ -132,6 +154,8 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	//Will influence the agent's belief on no / potential / immediate danger : Should I keep my belief/certainty?
 	action semmelweis_reflex(float beliefProbability)
 	{
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
 		if (beliefProbability = 0 and nb_of_warning_msg < 2) //he does not believe the danger will occur, I keep my belief 
 		{
 			return true;
@@ -140,6 +164,8 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		{
 			return false;
 		}
+		
+		return true;
 	}
 	
 	
@@ -149,6 +175,8 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	// "nb of occurences" = received_warnings
 	action illusory_truth_effect(predicate beliefName, float perceivedProbability)
 	{
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
 		if( ! has_belief(beliefName) )
 		{
 			do add_belief(beliefName, perceivedProbability);
@@ -173,36 +201,49 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		{
 			probability_to_react <- 1.0;
 		}
+		
 
 		// Si ce n'est pas le premiers message, la probabilité de réaction baisse en fonction du nombre de messages déjà reçus
 		if (nb_of_warning_msg > 1)
 		{
 			probability_to_react <- (probability_to_react > 0.0) ? (probability_to_react - (nb_of_warning_msg / 10)) : 0.0;
 		}
-
-		// Si une alerte d'évacution est donnée
-		if ("Go to shelter" in msg)
+		
+		
+		if(neglect_of_probability_cb_influence)
 		{
-			// Je réagis ou non
-			if (flip(probability_to_react))
-			{
-				// Ok I react
-				
-				write (string(self) + " : I'm going to defend my house");
-				on_alert <- true;
-				warned <- true;
-				
-				do accept_proposal(message: info, contents: ['OK!']);
-				// Motivation increases speed
-				speed <- speed + motivation;
-				// Je crois qu'il y a un danger potentiel
-//				belief <- potential_danger;
-				do add_belief(potential_danger_belief);
-				if(nb_of_warning_msg = 1)
-				{
-					nb_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call + 1;
-				}
-			}
+			write string(self)+" My probability to reacte is influenced by neglect_of_probability";
+			do neglect_of_probability(probability_to_react);
+		}
+		
+		bool react <- flip(probability_to_react);
+		
+		//Should be in perceive
+		if(illusory_truth_effect_cb_influence)
+		{
+			write string(self)+" My probability to react is influenced by illusory_truth_effect";
+			do illusory_truth_effect(potential_danger_belief, probability_to_react);
+		}
+		
+		if(semmelweis_reflex_cb_influence)
+		{
+			react <- semmelweis_reflex(probability_to_react);
+			if(!react) { write string(self)+" My probability to react is influenced by the semmelweis_reflex"; }
+		}
+
+		if ("Go to shelter" in msg and react)
+		{
+			write (string(self) + " : I'm going to defend my house");
+			on_alert <- true;
+			warned <- true;
+			
+			do accept_proposal(message: info, contents: ['OK!']);
+			
+			speed <- speed + motivation; // Motivation increases speed
+			
+			do add_belief(potential_danger_belief);
+			
+			if(nb_of_warning_msg = 1) { nb_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call + 1; } //count people who reacted on first call
 		}
 
 		// Si c'est la Fires extinguished
@@ -218,7 +259,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 //	}
 
 	//If the agent perceives a fire it should give the alert and stay alert
-	perceive target: plot in: 100.0 # m when: alive and ! in_safe_place and ! has_belief(potential_danger_belief)  {
+	perceive target: plot in: 50.0 # m when: alive and ! in_safe_place and ! has_belief(potential_danger_belief)  {
 		if(burning)
 		{
 			ask myself{
@@ -230,7 +271,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	}
 	
 	//If the agent perceives is hurt by a fire it should escape
-	perceive target: plot in: 50.0 # m when: alive and ! in_safe_place and ! has_belief(immediate_danger_belief) {
+	perceive target: plot in: 10.0 # m when: alive and ! in_safe_place and ! has_belief(immediate_danger_belief) {
 		if(burning)
 		{
 			ask myself{

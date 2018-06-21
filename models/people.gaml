@@ -36,39 +36,13 @@ species people skills: [moving, fipa] control: simple_bdi
 	list<string> desires <- nil;
 	string intention <- nil;
 	string belief <- "no_danger_belief";
-
+	
 	// Psychological attributes
 	int motivation; //higher motivation increases speed and defense capacity
 	int risk_awareness; //higher awareness will increase response to messages and escape_intention
 	int knowledge; //level of knowledge crisis management and technical abilities -> should influend cognitive biases
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
-
-	
-//	//Intention
-//	predicate work_intention <- new_predicate("work_intention");
-//	predicate home_intention <- new_predicate("home_intention");
-//	predicate relax_intention <- new_predicate("relax_intention");
-//	predicate call_911_intention <- new_predicate("call_911_intention", true);
-//	predicate defend_intention <- new_predicate("defend_intention");
-//	predicate escape_intention <- new_predicate("escape_intention");
-	
-//	//if possibility_of_a_fire, the person is on alert
-//	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 50;
-//	
-//	//for most people, a fire means being on alert, escape_intention and calling 911
-//	//These rule will change for different personnalities and situations
-//	
-//	rule belief: no_danger_belief remove_desire: escape_desire;
-//	rule belief: no_danger_belief remove_desire: on_alert_desire;
-//	rule belief: no_danger_belief remove_desire: call_911_desire;
-//	
-//	rule belief: potential_danger_belief new_desire: on_alert_desire strength: 100;
-//	rule belief: potential_danger_belief new_desire: call_911_desire strength: 50;
-//
-//	rule belief: immediate_danger_belief new_desire: on_alert_desire strength: 100;
-//	rule belief: immediate_danger_belief new_desire: escape_desire strength: 100;
-//	rule belief: immediate_danger_belief new_desire: call_911_desire strength: 100;
 
 	// Init
 	init
@@ -89,18 +63,13 @@ species people skills: [moving, fipa] control: simple_bdi
 	// Graphic aspect
 	aspect sphere3D { draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color; }
 	
-	
 	action status (string msg)
 	{
 		write string(self) + " ("+energy+") : " + msg; 
-////		write "Plans : " + sample(get_plans);  //not work_intention
+//		write "Plans : " + plans_base;
 		write "B:" + length(belief_base) + ":" + belief_base; 
 		write "D:" + length(desire_base) + ":" + desire_base; 
 		write "I:" + length(intention_base) + ":" + intention_base; 
-		
-//		write "Beliefs : " + get_beliefs(no_danger_belief) + get_beliefs(potential_danger_belief) + get_beliefs(immediate_danger_belief); 
-//		write "Desires : " + get_desires(work_desire) + get_desires(home_desire) + get_desires(call_911_desire) + get_desires(escape_desire) + get_desires(on_alert_desire); 
-//		write "Intentions : " + get_intentions(work_intention) + get_intentions(relax_intention) + get_intentions(call_911_intention) + get_intentions(defend_intention) + get_intentions(escape_intention); 
 	}
 	
 	// Go somewhere

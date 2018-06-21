@@ -27,17 +27,16 @@ species building schedules: [] frequency: 0
 	string roof_texture <- "../images/bd_roof.png";
 	string bunker_texture <- "../images/bunker_txt.png";
 
-	// Aspect
 	aspect base
 	{
-	// graded gray, turning to black as the building burns
-//		draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
-//		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
-//		black depth: height;
-		
-		draw circle(5 # m) texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
+		// graded gray, turning to black as the building burns
+		draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
 		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
 		black depth: height;
+		
+//		draw circle(5 # m) texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
+//		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
+//		black depth: height;
 	}
 
 }
