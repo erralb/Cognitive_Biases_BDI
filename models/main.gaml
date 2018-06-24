@@ -24,7 +24,6 @@ import "behavior_profiles/threat_avoiders.gaml"
 import "behavior_profiles/unaware_reactors.gaml"
 import "behavior_profiles/isolated_and_vulnerable.gaml"
 
-
 global
 {
 	//Time
@@ -140,14 +139,10 @@ global
 		list<building> police_stations <- nb_police_station among building where (!each.bunker and !each.fire_station);
 		loop i over: police_stations { i.police_station <- true; }
 
-		// Fires outside the city
+		//Fires
 		create fire number: 1 with: [choosed_location::{ 170, 210 }];
 		create fire number: 1 with: [choosed_location::{ 750, 300 }];
-		// Fires inside the city
-		create fire number: 1 with: [choosed_location::{ 420, 550 }];
-//		create fire number: 1 with: [choosed_location::{ 460, 173 }];
-//		create fire number: 1 with: [choosed_location::{ 130, 823 }];
-//		create fire number: 1 with: [choosed_location::{ 704, 770 }];
+		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
 
 		// Random fires
 		create fire number: nb_fire;
@@ -158,7 +153,7 @@ global
 		
 	}
 
-	reflex fin_simulation when: do_pause
+	reflex fin_simulation when: do_pause or fire_size = 0
 	{
 		do_pause <- false;
 		do pause;

@@ -1,0 +1,22 @@
+/**
+* Name: Compare residents behavior with and without Cognitive Biases
+* 
+* Author: Pierre Blarre
+* 
+* Description : Starting from the same location, observe how CB delay their actions
+*/
+
+model Bushfires_BDI_Cognitive_Biases
+
+import "../models/environment.gaml"
+
+experiment With_And_Without_CB_Comparison parent: Main
+{
+	init { 
+		simulation_name <- "With_And_Without_Cognitive_Biases_Comparison";
+		
+		//place all residents on the same spot, give them immediate_danger_belief -> will trigger evacuation or defense plans
+		
+		//Store result
+	}
+}
