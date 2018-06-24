@@ -22,6 +22,18 @@ species firefighters parent: people
 {
 	float fighting_distance <- 10 # m;
 	bool injured <- false;
+	
+	//Beliefs
+	predicate no_fire <- new_predicate("no_fire",true);
+	predicate possible_fire <- new_predicate("possible_fire",true);
+	predicate sure_fire <- new_predicate("sure_fire",true);
+	
+	//Desires
+	predicate recover_desire <- new_predicate("rest_desire",true);
+	predicate fighting_desire <- new_predicate("go_fighting_desire",true);
+	predicate stop_fighting_desire <- new_predicate("stopfighting_desire",true);
+	predicate watch_desire <- new_predicate("watch_desire",true);
+	predicate reinforcements_desire <- new_predicate("watch_desire",true);
 
 	init
 	{
@@ -46,6 +58,13 @@ species firefighters parent: people
 	}
 
 	reflex color { color <- rgb(energy / 100, 0, 0); } //color is changing when injured
+
+//	plan recover intention: recover_desire priority 5
+//	when:
+//	finished_when:
+//	{
+//		
+//	}
 
 	// If hurt (energy below 1000) then it will go back to the station to get healed
 	reflex health when: alive and !injured and energy < 1000
