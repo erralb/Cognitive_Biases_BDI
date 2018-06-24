@@ -5,9 +5,9 @@
 * Description:  Definition des types de residants
 * Fichier: resident.gaml
 */
-model Application_Fire_Model
+model Bushfires_BDI_Cognitive_Biases
 
-import "Application_Fire_Model.gaml"
+import "Bushfires_BDI_Cognitive_Biases.gaml"
 
 /*=============================================
 *                                             Agent résidents  
@@ -36,11 +36,12 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 
 	
     //Beliefs
-	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
 	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
 	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
 	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
-	predicate can_defend_belief <- new_predicate("can_defend_belief",true); //CB : Neglect of Probability?
+	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
+	predicate can_defend_belief <- new_predicate("can_defend_belief",true);
+	predicate i_can_escape <- new_predicate("i_can_escape",true); 
 	
 	//Desires
 	predicate work_desire <- new_predicate("work_desire",10);
@@ -95,7 +96,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		
 		if(use_cognitive_biases)
 		{
-			//Randomly distribute Cognitive Biases
+			//Randomly distribute Cognitive Biases at a 20% chance
 			if(flip(0.2)) { neglect_of_probability_cb_influence <- true; cognitive_biases_influence <- true; }
 			if(flip(0.2)) { semmelweis_reflex_cb_influence <- true; cognitive_biases_influence <- true; }
 			if(flip(0.2)) { illusory_truth_effect_cb_influence <- true; cognitive_biases_influence <- true; }
@@ -264,7 +265,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		{
 			ask myself{
 				do add_belief(potential_danger_belief);
-				do add_desire(call_911_desire);
+//				do add_desire(call_911_desire);
 //				do status("Adding potential_danger_belief and home_intention");
 			}
 		}
@@ -275,18 +276,19 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		if(burning)
 		{
 			ask myself{
-				energy <- energy - 0.01;
-				if(energy <= 0)  {
-					alive <-false;
-				}
-				else if(!has_desire(escape_desire))
+////				energy <- energy - 0.01;
+//				if(energy <= 0)  {
+//					alive <-false;
+//				}
+//				else 
+				if(!has_desire(escape_desire))
 				{
 //					do remove_desire(work_desire);
-//					do remove_belief(no_danger_belief);
-//					do remove_belief(potential_danger_belief);
+					do remove_belief(no_danger_belief);
+					do remove_belief(potential_danger_belief);
 					
 					do add_belief(immediate_danger_belief);
-					do add_desire(escape_desire);
+//					do add_desire(escape_desire);
 					
 					escape_target <- get_closest_safe_place();
 					
@@ -318,9 +320,9 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		}
 	}
 
-	plan call_911_desire intention: call_911_desire priority: 3 when: alive and ! warning_sent finished_when: warning_sent
+	plan call_911_desire intention: call_911_desire priority: 3 when: alive and ! warning_sent finished_when: warning_sent instantaneous: true
 	{
-		do send_msg([one_of(fireman where each.alive)], nil, "There's a fire");
+		do send_msg([one_of(firefighters where each.alive)], nil, "There's a fire");
 		warning_sent <- true;
 //		do status("I called 911");
 	}
@@ -351,8 +353,8 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 //		if (risk_awareness > 2)
 //		{
 //		// ...elle alerte les pompiers
-//			do send_msg([one_of(fireman where each.alive)], nil, 'Il y a un feu!');
-//			// do start_conversation ( to : [one_of(fireman where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
+//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
+//			// do start_conversation ( to : [one_of(firefighters where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
 //			warning_sent <- true;
 //			belief <- potential_danger;
 //		}
@@ -368,7 +370,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 //		write string(self) + " : Danger perceived ";
 //		if(risk_awareness > 2)
 //		{
-//			do send_msg([one_of(fireman where each.alive)], nil, 'Il y a un feu!');
+//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
 //			warning_sent <- true;
 ////			belief <- potential_danger_belief;
 //		}

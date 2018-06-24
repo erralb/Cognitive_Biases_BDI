@@ -16,9 +16,9 @@
 * 
 * Fichier: can_do_defenders.gaml
 */
-model Application_Fire_Model
+model Bushfires_BDI_Cognitive_Biases
 
-import "../Application_Fire_Model.gaml"
+import "../Bushfires_BDI_Cognitive_Biases.gaml"
 
 /*============================================================
 *                                             Agent can_do_defenders

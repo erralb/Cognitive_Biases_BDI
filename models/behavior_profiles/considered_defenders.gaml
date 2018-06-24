@@ -1,34 +1,37 @@
 /**
-* Name: livelihood_defenders
+* Name: considered_defenders
 * *=======================
 * Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * Description:  
 * 
-* 	Défenseurs économiques (livelihood defenders) : engagés à rester et défendre ce qu’ils considèrent 
-* 	comme leur moyen de subsistance (ferme, hôtel...) et donc bien préparés
+* 	Défenseurs réfléchis (considered defenders) : fortement engagés à rester et défendre leur maison, 
+* 	conscients des risques, efforts délibérés de préparation et d’entraînement ;
 * 
+*
 *  Les defenders peuvent:
+* 
+*  - Préparer le terrain au alentour de leurs maison (couper l'herbe ou arroser)
 *  - Renforcer leur maison
 *  - combattre le feu
 * 
 * 
-* Fichier: livelihood_defenders.gaml
+* Fichier: considered_defenders.gaml
 */
-model Application_Fire_Model
+model Bushfires_BDI_Cognitive_Biases
 
-import "../Application_Fire_Model.gaml"
+import "../Bushfires_BDI_Cognitive_Biases.gaml"
 
 /*============================================================
-*                                             Agent  livelihood_defenders
+*                                             Agent considered_defenders
 *============================================================*/
-species livelihood_defenders parent: resident
+species considered_defenders parent: resident
 {
 
 // Variables
 	init
 	{
-	// Ces  personnes ont de base une bonne capacité de réaction
-		probability_to_react <- 0.8;
+	// Ces  personnes ont de base une forte capacité de réaction
+		probability_to_react <- 0.7;
 		// Affectation de la couleur de base
 		color <- rgb(0, energy, 0);
 
@@ -37,9 +40,9 @@ species livelihood_defenders parent: resident
 		desires <- [defend, run_away];
 		intention <- desires[0];
 		escape_target <- home;
-		motivation <- max([0, rnd(4, 5) + motivation]); // Très motivé
-		risk_awareness <- max([0, rnd(1, 2) + risk_awareness]); // Attachement économique qui diminue la conscience des risques
-		knowledge <- max([0, rnd(3, 4) + knowledge]); // Expérimentés et compétents,
+		motivation <- max([0, rnd(3, 4) + motivation]); // Assez motivé
+		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); // conscient des risques
+		knowledge <- max([0, rnd(4, 5) + knowledge]); // Expérimentés et compétents,
 	}
 
 	// Relexe : Couleur
@@ -76,7 +79,7 @@ species livelihood_defenders parent: resident
 			{
 
 			// Ok je réagis
-				write (string(self) + " : Je vais défendre ma source de revenu");
+				write (string(self) + " : Je vais défendre ma maison.");
 				on_alert <- true;
 				warned <- true;
 				do accept_proposal(message: info, contents: ['OK!']);
@@ -84,11 +87,12 @@ species livelihood_defenders parent: resident
 				speed <- speed + motivation;
 				// Je crois qu'il y a un danger potentiel
 				belief <- potential_danger;
+				nb_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call + 1;
 			}
 
 		}
 
-		// Si c'est la fin de l'alerte au feux
+		// Si c'est la fin de l'alerte au feu
 		if (info.contents[0] = "Fin de l'alerte au feu")
 		{
 		// Accépter le message et retour à l'état normal
@@ -98,32 +102,33 @@ species livelihood_defenders parent: resident
 
 	}
 
-	// Je suis en alerte et pas en lieu sûr et pas au travail
-	reflex react_go_work when: alive and on_alert and !in_safe_place and !at_work
+	// Je suis en alerte et pas en lieu sûr ni chez moi
+	reflex react_go_home when: alive and on_alert and !in_safe_place and !at_home
 	{
-	// je vais au travail car je suis déterminé à protéger mon lieu de travail
-		if (bool(go_to(work)))
+
+	// je rentre chez moi car je suis déterminés à protéger ma maison,
+		if (bool(go_to(home)))
 		{
-			at_home <- false;
-			at_work <- true;
+			at_home <- true;
+			at_work <- false;
 		}
 
 	}
 
-	// Je suis en alerte et au travail => je défend
-	reflex defending when: alive and on_alert and !in_safe_place and at_work and intention = defend
+	// Je suis en alerte et chez moi => je défend
+	reflex defending when: alive and on_alert and !in_safe_place and at_home and intention = defend
 	{
 
-	// Si mon intention de base et de déffendre mon travail
+	// Si mon intention de base et de déffendre ma maison
 		if ((cycle + id) mod 10 = 0)
 		{
-		//write string(self) + " : Je défends mon travail." ;
-			location <- any_point_in(work);
-			// Plus ma connaissance et ma motivation sont grandes, plus mon efficacité défendre mon travail est grande
+		//write string(self) + " : Je défends ma maison." ;
+			location <- any_point_in(home);
+			// Plus ma connaissance et ma motivation sont grandes, plus mon efficacité défendre ma maison est grande
 			do increase_terrain_resistance(knowledge + motivation);
 			do increase_building_resistance(knowledge + motivation);
 
-			// Si je vois le feu et que ma conscience des risques est >= 3, mon désire change et je fuis 
+			// Si je vois le feux et que ma conscience des risques est >= 3, mon désire change et je fuis 
 			list<bool> danger <- check_if_danger_is_near();
 			if (danger[0] and risk_awareness >= 3)
 			{
@@ -166,3 +171,4 @@ species livelihood_defenders parent: resident
 	}
 
 }
+

@@ -1,7 +1,7 @@
 /**
 * Name: FireModelBDI
 * Author: Pierre Blarre
-* Description: 
+* Description: just for testing and experimenting with BDI. MosDI Architecture firefighters example model
 * Tags: 
 */
 

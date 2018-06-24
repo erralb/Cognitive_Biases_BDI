@@ -1,42 +1,43 @@
 /**
-* Name: unaware_reactors
+* Name: isolated_and_vulnerable
 * *=======================
 * Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * Description:  
 * 
-*   Réactifs inconscients (unaware reactors) : inconscients du risque, ne se sentent pas
-*   concernés, aucune connaissance des réactions appropriées ni préparation (touristes...) ;
+*    Isolés vulnérables (isolated and vulnerable) : physiquement ou socialement isolés (p. ex.
+*    personnes âgées ou handicapées) ce qui limite leur capacité à répondre adéquatement.
 * 
-* Fichier: unaware_reactors.gaml
+* Fichier: resident.gaml
 */
-model Application_Fire_Model
+model Bushfires_BDI_Cognitive_Biases
 
-import "../Application_Fire_Model.gaml"
+import "../Bushfires_BDI_Cognitive_Biases.gaml"
 
 /*============================================================
-*                                             Agent unaware_reactors
+*                                             Agent isolated_and_vulnerable
 *============================================================*/
-species unaware_reactors parent: resident
+species isolated_and_vulnerable parent: resident
 {
 
 // Variables
-	bool reacting <- false;
 	init
 	{
-	// Les personnes Réactifs inconscients  n'ont pas conscience du risque et ne réagissent pas beaucoup
-		probability_to_react <- 0.1;
+	// On part du principe qu'une personne isolé socialement ou physiquement ne travaille pas
+		work <- home;
 		// Affectation de la couleur de base
 		color <- rgb(0, energy, energy);
 
 		// En cas d'alerte je fuis
-		desires <- [run_away];
+		desires <- [ask_for_help];
 		intention <- desires[0];
 
-		// je ne connais pas bien la ville, je ne connais qu'une sortie sans savoir si c'est la plus proche
-		escape_target <- one_of(city_exit);
-		motivation <- max([0, rnd(2, 3) + motivation]); // Motivation moyenne
-		risk_awareness <- max([0, rnd(0, 1) + risk_awareness]); //  Inconscients du risque
-		knowledge <- max([0, rnd(0, 1) + knowledge]); // Aucune connaissances
+		// Les personnes isolés ou vulnérable ont de base une faible capacité de réaction
+		probability_to_react <- 0.1;
+
+		// Faiblesse au niveau de la motivation , de la conscience des risques et des conaissances
+		motivation <- max([0, rnd(1, 2) + motivation]);
+		risk_awareness <- max([0, rnd(0, 1) + risk_awareness]);
+		knowledge <- max([0, rnd(0, 1) + knowledge]);
 	}
 
 	// Relexe : Couleur
@@ -56,10 +57,12 @@ species unaware_reactors parent: resident
 		if ("Allez dans un bunker!" in msg)
 		{
 
+		// TODO en fonction du message (personnalisé ou non) et de la personnalité => déduire une probabilité de réagir
+
 		// Si le message est personnalisé, cette probabilité augmente fortement
 			if (personalized_msg)
 			{
-				probability_to_react <- 0.7;
+				probability_to_react <- 0.3;
 			}
 
 			// Si ce n'est pas le premiers message, la probabilité de réaction baisse en fonction du nombre de messages déjà reçus
@@ -69,16 +72,25 @@ species unaware_reactors parent: resident
 			}
 
 			// Je réagis ou non
-			if (flip(probability_to_react))
+			if (flip(probability_to_react) and intention = ask_for_help)
 			{
-			// Ok je réagis, je suis en alerte
-				write (string(self) + " : Je vais essayé de fuire mais je connais mal la ville.");
+			// Ok je réagis
 				on_alert <- true;
+				warned <- true;
+				do accept_proposal(message: info, contents: ['OK!']);
 				// Ma motivation augement ma vitesse
 				speed <- speed + motivation;
 				// Je crois qu'il y a un danger potentiel
 				belief <- potential_danger;
 				nb_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call + 1;
+
+				// Je demande à un policier de venir me chercher;
+				if (!(residents_who_have_asked_help contains self))
+				{
+					write (string(self) + " : je demandee de l'aide à la police" + string(self));
+					residents_who_have_asked_help <- residents_who_have_asked_help + self;
+				}
+
 			} else
 			{
 			// Je ne suis pas concerné, je ne réagit pas.
@@ -94,33 +106,6 @@ species unaware_reactors parent: resident
 		// Accépter le message et retour à l'état normal
 			do accept_proposal(message: info, contents: ['OK!']);
 			do back_to_normal_state;
-		}
-
-	}
-
-	// Je suis en alerte et pas en lieux sûr et que je désire fuire
-	reflex react when: alive and on_alert and !in_safe_place and intention = run_away
-	{
-
-	// Ils n'ont pas de plan et recherche l'un des sortie de la ville sans savoir si c'est la plus proche
-		if (bool(go_to(agent(escape_target))))
-		{
-			at_home <- false;
-			at_work <- false;
-			in_safe_place <- true;
-		}
-
-		if (cycle mod 2 = 0)
-		{
-		// S'il existe un danger, je réagis en fonction de ma conscience du risque et de trouve la meilleurs issue en fonction de ma connaissance
-			list<bool> danger <- check_if_danger_is_near();
-			if (danger[0])
-			{
-			// Je crois qu'il y a un danger immédiat
-				belief <- immediate_danger;
-				do react_to_danger(danger);
-			}
-
 		}
 
 	}

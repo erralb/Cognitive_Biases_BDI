@@ -1,14 +1,20 @@
 /**
-* Name: people
-* *=======================
+* Name:  People specie
+*
+* Author: Pierre Blarre
 * 
-* Author: Pierre Blarre - based on a previous model made by Sofiane Sillali, Thomas Artigue, Pierre Blarre
+* Based on a model without BDI architecture by : Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * 
-* Description: People : Movement (work, home, safe place) + Messages (send/receive)
-* Fichier: people.gaml
+* Description: 
+* Mother specie for residents, firefighters and policemen. 
+* Common moving skills (go to work, go home, go to shelter) following the road network
+* Actions regarding dangerous situations (eaction to danger)
+* Communication ( Send and receive messages )
+* 
 */
-model Application_Fire_Model
-import "Application_Fire_Model.gaml"
+
+model Bushfires_BDI_Cognitive_Biases
+import "Bushfires_BDI_Cognitive_Biases.gaml"
 
 species people skills: [moving, fipa] control: simple_bdi
 {
@@ -36,6 +42,17 @@ species people skills: [moving, fipa] control: simple_bdi
 	list<string> desires <- nil;
 	string intention <- nil;
 	string belief <- "no_danger_belief";
+	
+	// OLD BDI Intentions
+	string run_away <- "Escape";
+	string defend <- "Defend";
+	string protect <- "Protect";
+	string ask_for_help <- "I need help";
+
+	// OLD BDI Beliefs
+	string no_danger <- "No danger";
+	string potential_danger <- "Potential danger";
+	string immediate_danger <- "Immediate danger";
 	
 	// Psychological attributes
 	int motivation; //higher motivation increases speed and defense capacity
@@ -95,8 +112,8 @@ species people skills: [moving, fipa] control: simple_bdi
 //		if (risk_awareness > 2)
 //		{
 //		// ...elle alerte les pompiers
-//			do send_msg([one_of(fireman where each.alive)], nil, 'Il y a un feu!');
-//			// do start_conversation ( to : [one_of(fireman where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
+//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
+//			// do start_conversation ( to : [one_of(firefighters where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
 //			warning_sent <- true;
 //			belief <- potential_danger_belief;
 //		}
@@ -144,7 +161,7 @@ species people skills: [moving, fipa] control: simple_bdi
 			}
 
 			// Ajouts des résultats de la simulation dans le fichier csv
-			save [simulation_name, personalized_msg, trained_population, tactical_fireman, percentage_res_alive, percentage_dead_res, percentage_residents_w_answered_1st_call,
+			save [simulation_name, personalized_msg, trained_population, tactical_firefighters, percentage_res_alive, percentage_dead_res, percentage_residents_w_answered_1st_call,
 			//				percentage_alerted,
 			percentage_in_safe_place,buildings_damage] header: true to: "../results/exported_results.csv" type: "csv" rewrite: false;
 
@@ -347,7 +364,6 @@ species people skills: [moving, fipa] control: simple_bdi
 	// paramètre : infos sur le feu
 	action react_to_danger (list<bool> directions)
 	{
-
 	// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
 		if (directions[0] and risk_awareness > 0)
 		{
@@ -361,7 +377,7 @@ species people skills: [moving, fipa] control: simple_bdi
 			// Mais si ma connaissance est supérieur à la moyenne
 			if (knowledge >= 3)
 			{
-			// Je connais les bunkers et  les soties les plus proches
+				// Je connais les bunkers et  les soties les plus proches
 				include_bunker <- true;
 				find_the_nearest <- true;
 			}

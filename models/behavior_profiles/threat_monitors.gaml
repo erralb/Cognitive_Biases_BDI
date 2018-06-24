@@ -1,22 +1,22 @@
 /**
-* Name: threat_avoider
+* Name: threat_monitors
 * *=======================
 * Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * Description:  
 * 
-*   Eviteur de menace (threat avoider) : conscients du risque et de leur vulnérabilité planifient de partir tôt avant toute 
-* menace réelle, mais pas de plan s'ils sont surpris
+*   Eviteur de menace (threat avoider) : N'ont pas l'intention de rester face à une menace serieuse
+* ni de partir avant qu'il le juge necessaire, attendent de voir
 * 
-* Fichier: threat_avoider.gaml
+* Fichier: threat_monitors.gaml
 */
-model Application_Fire_Model
+model Bushfires_BDI_Cognitive_Biases
 
-import "../Application_Fire_Model.gaml"
+import "../Bushfires_BDI_Cognitive_Biases.gaml"
 
 /*============================================================
-*                                             Agent threat_avoider
+*                                             Agent  threat_avoider
 *============================================================*/
-species threat_avoiders parent: resident
+species threat_monitors parent: resident
 {
 
 // Variables
@@ -24,9 +24,9 @@ species threat_avoiders parent: resident
 	init
 	{
 	// Les personnes conscient ont conscience du risque
-		probability_to_react <- 0.8;
+		probability_to_react <- 0.7;
 		// Affectation de la couleur de base
-		color <- # purple;
+		color <- # violet;
 
 		// En cas d'alerte je fuis
 		desires <- [run_away];
@@ -35,15 +35,15 @@ species threat_avoiders parent: resident
 		// Connaisse la ville et recupere l'issue la plus proche
 		escape_target <- get_closest_safe_place();
 		motivation <- max([0, rnd(2, 3) + motivation]); // Motivation moyenne
-		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); //  Conscients du risque
-		knowledge <- max([0, rnd(3, 5) + knowledge]); // Bonne connaissances
+		risk_awareness <- max([0, rnd(2, 4) + risk_awareness]); //  Conscients du risque
+		knowledge <- max([0, rnd(2, 4) + knowledge]); // Bonne connaissances
 
 	}
 
 	// Relexe : Couleur
 	reflex color
 	{
-		color <- on_alert ? rgb(energy, energy, 0) : # purple;
+		color <- on_alert ? rgb(energy, energy, 0) : # violet;
 	}
 
 	// Réception de messages
@@ -60,7 +60,7 @@ species threat_avoiders parent: resident
 		// Si le message est personnalisé, cette probabilité augmente fortement
 			if (personalized_msg)
 			{
-				probability_to_react <- 1.0;
+				probability_to_react <- 0.8;
 			}
 
 			// Si ce n'est pas le premiers message, la probabilité de réaction baisse en fonction du nombre de messages déjà reçus
@@ -103,7 +103,7 @@ species threat_avoiders parent: resident
 	reflex react when: alive and on_alert and !in_safe_place and intention = run_away
 	{
 
-	// Ils connaissent la ville et  un plan il fuit vers l'endroit sur le plus proche
+	// Ils n'ont pas de plan et recherche l'un des sortie de la ville sans savoir si c'est la plus proche
 		if (bool(go_to(agent(escape_target))))
 		{
 			at_home <- false;
@@ -113,18 +113,12 @@ species threat_avoiders parent: resident
 
 		if (cycle mod 2 = 0)
 		{
-		// Si un feu est sur leur chemin, change de direction, ils sont surpris et n'ont pas de plan
-		// Il fuit vers l'endroit le plus sur, sans connaitre se concentrer sur la distance
-
-		// Recuperation d'un danger sur le chemin
+		// S'il existe un danger, je réagis en fonction de ma conscience du risque et de trouve la meilleurs issue en fonction de ma connaissance
 			list<bool> danger <- check_if_danger_is_near();
-			// Surpris leurs connaissances baissent
 			if (danger[0])
 			{
 			// Je crois qu'il y a un danger immédiat
 				belief <- immediate_danger;
-				knowledge <- knowledge - 3;
-				// Ils fuits vers un endroit sur mais pas forcement le plus proche
 				do react_to_danger(danger);
 			}
 
