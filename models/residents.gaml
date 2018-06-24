@@ -7,7 +7,7 @@
 */
 model Bushfires_BDI_Cognitive_Biases
 
-import "Bushfires_BDI_Cognitive_Biases.gaml"
+import "environment.gaml"
 
 /*=============================================
 *                                             Agent résidents  
@@ -232,7 +232,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			if(!react) { write string(self)+" My probability to react is influenced by the semmelweis_reflex"; }
 		}
 
-		if ("Go to shelter" in msg and react)
+		if ("Alert for Residents : Go to shelter" in msg and react)
 		{
 			write (string(self) + " : I'm going to defend my house");
 			on_alert <- true;

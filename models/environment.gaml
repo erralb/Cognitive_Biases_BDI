@@ -1,18 +1,186 @@
 /**
-* Name: Environment 
+* Name: Environment of the BDI Bushfires simulation
+*
+* Author: Pierre Blarre
 * 
-* Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
+* Based on a previous model without BDI architecture by : Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * 
-* Description: : Fire starting points, Plots (that spread fire), Buildings, Roads, City Exits, Firewatch twers, Waterways (not currently used)
+* Description: 
+* Bushfires simulation based on the Australian Black Saturday
+* Fire starting points, Plots (that spread fire), Buildings, Roads, City Exits, Firewatch twers, Waterways (not currently used)
 * 
+* Tags : Bushfires, BDI, Cognitive Biases, Behavior Profiles
 */
+
 model Bushfires_BDI_Cognitive_Biases
 
-import "Bushfires_BDI_Cognitive_Biases.gaml"
+import "people.gaml"
 
-global {
+import "emergency_services.gaml"
+
+import "residents.gaml"
+import "behavior_profiles/can_do_defenders.gaml"
+import "behavior_profiles/considered_defenders.gaml"
+import "behavior_profiles/livelihood_defenders.gaml"
+import "behavior_profiles/threat_monitors.gaml"
+import "behavior_profiles/threat_avoiders.gaml"
+import "behavior_profiles/unaware_reactors.gaml"
+import "behavior_profiles/isolated_and_vulnerable.gaml"
+
+
+global
+{
+	//Time
+	int starting_hour <- 7;
+	int current_hour <- 0 update: (starting_hour + (cycle / 60)) mod 24;
+	int current_min <- 0 update: (cycle) mod 60;
+	string current_time update: string(current_hour) + "h" + string(current_min);
+	bool is_night <- true update: current_hour < 7 or current_hour > 20;
+	
+	//Nature
+	float burning_probability <- 0.6; //probabilty that a plot will spread fire to one of its neighboring plot
+	float wind <- 0.2;
+	float drought <- 0.3;
+	float hurting_distance <- 5.0 # m;
+	float field_of_view <- 15.0 # m;
+	int nb_fire <- 0;
+	int fire_size <- 1 update: length(plot where (each.burning = true));
+	int fire_uncontrollable <- 600; //when is the fire size found incontrable and evacuation alert must be triggered
+	int burning_speed <- 10; //value in cycle. 1 is the fastest, 10 default value, above 10 will be very slow
+	
 	int grid_size <- 150; //Plots' size
+	
+	//Buildings
+	int nb_bunker <- 0;
+	int nb_exit <- 0;
+	int nb_fire_station <- 2;
+	int nb_police_station <- 1;
+	
+	//People and emergency services
+	int nb_firefighters <- 5;
+	int nb_policemen <- 2;
+	
+	int nb_residents_w_answered_1st_call <- 0;
+	int evacuation_reminder_cycle <- 300;
+	
+	//Residents distribution (we use a total of 100 people, for the simulation is slow above this number)
+	int nb_residents <- 0;
+	int nb_isolated_and_vulnerable <- 5;
+	int nb_unaware_reactors <- 5;
+	int nb_threat_avoiders <- 30;
+	int nb_threat_monitors <- 30;
+	int nb_can_do_defenders <- 10;
+	int nb_considered_defenders <- 10;
+	int nb_livelihood_defenders <- 10;
+	
+	list<resident> every_resident <- nil update: resident union isolated_and_vulnerable union unaware_reactors union threat_avoiders union threat_monitors union can_do_defenders union considered_defenders union livelihood_defenders;
+	list<resident> every_resident_alive <- nil update: every_resident where each.alive;
+	list<people> every_people_alive <- nil update: every_resident_alive + (firefighters + policemen) where each.alive;
+	
+	//Cognitive Biases
+	bool use_cognitive_biases <- false;
+	int cognitive_biases_influence_occurence <- 0;
+
+	//Application
+	int ids <- 1; //used for agents identifications
+	bool result_saved <- false;
+	bool do_pause <- false;
+	string simulation_name <- "No_Cognitive_Biases";
+	
+	bool show_firefighters_messages <- false;
+	bool show_police_messages <- false;
+	bool show_residents_BDI <- false;
+	bool show_cognitive_biases_messages <- false;
+
+	bool personalized_msg <- false; //If true, it will increase residents' probability to react to alert messages
+	bool trained_population <- false; //if true, it will increase residents' knowledge
+	bool tactical_firefighters <- false; //if true, firefighter can call for reinforcements and are placed in strategical places on the map
+	bool evacution_city_reported <- false; //true when the evacuation alert has been issued
+	
+	//Map
+	file bounds_shapefile <- file("../includes/bounds.shp");
+	file buildings_shapefile <- file("../includes/building.shp");
+	file roads_shapefile <- file("../includes/road.shp");
+	//file waterway_shapefile <- file("../includes/waterway.shp");
+	geometry shape <- envelope(envelope(buildings_shapefile) + envelope(roads_shapefile) + envelope(bounds_shapefile));
+	graph the_graph;
+	graph road_network;
+	graph road_network_practicable;
+	
+	init
+	{
+		//Buildings
+		create building from: buildings_shapefile;
+		
+		// Roads
+		create road from: roads_shapefile;
+		road_network <- as_edge_graph(road);
+		
+		// City exits
+		create city_exit { location <- { 450, 2.0 }; }
+		create city_exit { location <- { 0, 920 }; }
+		create city_exit { location <- { 850, 920 }; }
+
+		// Bunkers (= Shelters. Color: blue)
+		list<building> bunkers <- nb_bunker among building;
+		loop i over: bunkers { i.bunker <- true; }
+
+		// Fire stations
+		list<building> fire_stations <- nb_fire_station among building where (!each.bunker);
+		loop i over: fire_stations { i.fire_station <- true; }
+
+		// Police stations
+		list<building> police_stations <- nb_police_station among building where (!each.bunker and !each.fire_station);
+		loop i over: police_stations { i.police_station <- true; }
+
+		// Fires outside the city
+		create fire number: 1 with: [choosed_location::{ 170, 210 }];
+		create fire number: 1 with: [choosed_location::{ 750, 300 }];
+		// Fires inside the city
+		create fire number: 1 with: [choosed_location::{ 420, 550 }];
+//		create fire number: 1 with: [choosed_location::{ 460, 173 }];
+//		create fire number: 1 with: [choosed_location::{ 130, 823 }];
+//		create fire number: 1 with: [choosed_location::{ 704, 770 }];
+
+		// Random fires
+		create fire number: nb_fire;
+
+		// Police and firefighters
+		create firefighters number: nb_firefighters;
+		create policemen number: nb_policemen;
+		
+		if(simulation_name = "With_Cognitive_Biases"){
+			use_cognitive_biases <- true;
+		}
+	}
+
+	reflex fin_simulation when: do_pause
+	{
+		do_pause <- false;
+		do pause;
+	}
+
+	//Mouse commands
+	// Warning : do not use after 3d rotation or the coordinates will be messed up
+
+	// Create fire  (Right click on map then  "Apply Create Fire starter here")
+	user_command "Create a Fire here" { create fire number: 1 with: [choosed_location::# user_location]; }
+
+	// Create firewatch tower  (Right click on map then ->  "Apply Create Fire watch here")
+	user_command "Create Fire Watch Tower here" { create firewatch number: 1 with: [location::# user_location]; }
+
+	// Create city exit
+	user_command "Create a City Exit here" { create city_exit number: 1 with: [location::# user_location]; }
+
+	// Monitoring
+	int residents_alive <- 0 update: length(every_resident_alive);
+	int residents_dead <- 0 update: length(every_resident) - length(every_resident_alive);
+	int residents_alert <- 0 update: length(every_resident_alive where each.on_alert);
+	int residents_bunker <- 0 update: length(every_resident_alive where each.in_safe_place);
+	int residents_influenced_by_cognitive_biases <- 0 update: length(every_resident where each.cognitive_biases_influence);
+	float buildings_damage <-0.0 update:  (building sum_of (each.damage )  / length( building ) ) /255;
 }
+
 
 //Starts a fire on a location
 species fire
@@ -45,7 +213,7 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 {
 	int id <- 1;
 	rgb color <- # white;
-	int life <- rnd(90, 100);
+	int burning_capacity <- rnd(100, 150); //The plot's' energy. Stops burning when reaching 0 
 	
 	bool flammable <- false;
 	bool burning <- false;
@@ -61,7 +229,7 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 		ids <- ids + 1;
 		id <- ids;
 		flammable <- true;
-		color <- blend(# green, # maroon, 100 / life);
+		color <- blend(# green, # maroon, 100 / burning_capacity);
 
 		// Gray for roads
 		if (!empty(roads_shapefile overlapping (self)))
@@ -102,7 +270,7 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			{
 				victims <- victims + every_resident_alive inside pl where (!each.in_safe_place);
 				victims <- victims + firefighters inside pl where (each.alive);
-				victims <- victims + policeman inside pl where (each.alive) where (!each.in_safe_place);
+				victims <- victims + policemen inside pl where (each.alive) where (!each.in_safe_place);
 			}
 
 			//Hurt people
@@ -126,7 +294,7 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			}
 
 			// Fire spread
-			list<plot> neighbors_plot <- neighbors where (!each.burning and each.life > 0); //get non burning neighboring plots
+			list<plot> neighbors_plot <- neighbors where (!each.burning and each.burning_capacity > 0); //get non burning neighboring plots
 			loop neighbor over: neighbors_plot
 			{
 				if (neighbor.flammable)
@@ -147,8 +315,8 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			}
 
 			// Combustion of fire
-			life <- life - rnd(3, 7);
-			if (life < 0)
+			burning_capacity <- burning_capacity - rnd(3, 7);
+			if (burning_capacity < 0)
 			{
 				burning <- false;
 				color <- is_road ? rgb(5, 1, 1) : # maroon;
@@ -157,7 +325,6 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 		}
 	}
 }
-
 
 //TODO : create sub-species like house, shelters, etc. instead of using variables
 species building schedules: [] frequency: 0

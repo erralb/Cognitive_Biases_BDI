@@ -14,7 +14,7 @@
 */
 
 model Bushfires_BDI_Cognitive_Biases
-import "Bushfires_BDI_Cognitive_Biases.gaml"
+import "environment.gaml"
 
 species people skills: [moving, fipa] control: simple_bdi
 {
@@ -82,11 +82,15 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	action status (string msg)
 	{
-		write string(self) + " ("+energy+") : " + msg; 
-//		write "Plans : " + plans_base;
-		write "B:" + length(belief_base) + ":" + belief_base; 
-		write "D:" + length(desire_base) + ":" + desire_base; 
-		write "I:" + length(intention_base) + ":" + intention_base; 
+		write string(self) + " ("+energy+") : " + msg;
+		 
+		if(show_residents_BDI)
+		{
+	//		write "Plans : " + plans_base;
+			write "B:" + length(belief_base) + ":" + belief_base; 
+			write "D:" + length(desire_base) + ":" + desire_base; 
+			write "I:" + length(intention_base) + ":" + intention_base; 
+		}
 	}
 	
 	// Go somewhere
@@ -350,7 +354,6 @@ species people skills: [moving, fipa] control: simple_bdi
 	// return : bool: danger proche
 	action check_if_danger_is_near
 	{
-
 		// Je regarde si un feu est à distance de danger
 		list<bool> directions <- get_closest_fire_at_hurting_distance();
 

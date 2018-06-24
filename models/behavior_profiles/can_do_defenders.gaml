@@ -18,7 +18,7 @@
 */
 model Bushfires_BDI_Cognitive_Biases
 
-import "../Bushfires_BDI_Cognitive_Biases.gaml"
+import "../environment.gaml"
 
 /*============================================================
 *                                             Agent can_do_defenders
