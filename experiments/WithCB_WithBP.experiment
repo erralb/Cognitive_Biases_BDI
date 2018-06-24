@@ -1,84 +1,16 @@
 /**
-* Name: NoCBNoBP
+* Name: With Cognitive Biases, With behavior profiles
+* 
 * Author: Pierre Blarre
-* Description: This wizard creates a new experiment file.
-* Tags: Tag1, Tag2, TagN
+* 
+* Description : This is a copy of the main experiment, just to have it in the experiments list
 */
 
-experiment WithCB_WithBP model:'../models/environment.gaml' type:gui 
+model Bushfires_BDI_Cognitive_Biases
+
+import "../models/environment.gaml"
+
+experiment WithCB_WithBP parent: Main
 {
-	// Boutons d'interaction
-	action createFire { create fire; }
-	user_command Create_Fire action: createFire;
-
-	// Paramètres
-	parameter "Cognitive Biases" var: use_cognitive_biases init: true category: "Modelisation";
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb firefighters" var: nb_firefighters category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policemen category: "Agents" min: 0;
-
-//	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-//	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-//	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-//	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-//	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-//	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-//	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
-	
-	init { simulation_name <- "With_Cognitive_Biases"; }
-
-	output
-	{
-		// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident with Cognitive Biases" value: residents_influenced_by_cognitive_biases;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-		monitor "Buildings damage" value: buildings_damage color: #grey;
-
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Cognitive Biases influence" value: cognitive_biases_influence_occurence color: # blue;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-		}
-
-		// Visualisation 3D
-		display map type: opengl
-		{
-			species people aspect: sphere3D;
-			species road aspect: base;
-			species resident aspect: sphere3D;
-			species isolated_and_vulnerable aspect: sphere3D;
-			species unaware_reactors aspect: sphere3D;
-			species threat_avoiders aspect: sphere3D;
-			species threat_monitors aspect: sphere3D;
-			species can_do_defenders aspect: sphere3D;
-			species considered_defenders aspect: sphere3D;
-			species livelihood_defenders aspect: sphere3D;
-			species firefighters aspect: sphere3D;
-			species policemen aspect: sphere3D;
-			species waterway aspect: base refresh: false;
-			grid plot transparency: 0.4;
-			species fire aspect: base refresh: true;
-			species city_exit aspect: base transparency: 0.1;
-			species building aspect: base;
-			species firewatch aspect: base;
-			light 1 color: (is_night ? 50 : 230);
-		}
-	}
+	init { simulation_name <- "With_Cognitive_Biases_With_Behavior_Profiles"; }
 }

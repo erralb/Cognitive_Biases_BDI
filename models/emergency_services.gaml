@@ -10,7 +10,7 @@
 */
 model Bushfires_BDI_Cognitive_Biases
 
-import "environment.gaml"
+import "main.gaml"
 
 global
 {

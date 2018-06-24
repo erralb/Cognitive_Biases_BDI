@@ -14,7 +14,7 @@
 */
 
 model Bushfires_BDI_Cognitive_Biases
-import "environment.gaml"
+import "main.gaml"
 
 species people skills: [moving, fipa] control: simple_bdi
 {
@@ -42,8 +42,10 @@ species people skills: [moving, fipa] control: simple_bdi
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
 	
-	float probability_to_react <- 0.70; //by default we suppose people will most likely react to an alert
+	float default_probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
+	float probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
 	int nb_of_warning_msg <- 0;
+	int nb_of_ignored_warning_msg <- 0;
 	
 	//Definition of the variables featured in the BDI architecture. 
 	//How is this used, I am not sure. TODO: research how this should be used
@@ -58,7 +60,9 @@ species people skills: [moving, fipa] control: simple_bdi
 	bool semmelweis_reflex_cb_influence <- false;
 	bool illusory_truth_effect_cb_influence <- false;
 	
+	
     //Beliefs
+	float default_belief_strengh <- 0.5;
 	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
 	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
 	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
@@ -97,6 +101,7 @@ species people skills: [moving, fipa] control: simple_bdi
 		risk_awareness <- training + fear_of_fire;
 		motivation <- training - fear_of_fire;
 		knowledge <- training - fear_of_fire;
+		do add_belief(no_danger_belief, default_belief_strengh);
 	}
 
 	aspect sphere3D { draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color; }
@@ -120,7 +125,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	action go_to (agent a)
 	{
 		if (!(target overlaps a)) { target <- any_location_in(a); } // set target destination to agent location
-		do goto target: target on: road_network; // move along roads
+		do goto target: target on: road_network; // move along roads TODO check if roads are usable if not, should try to walk
 		if (location = target) { return true; } 
 		else { return false; }
 	}
@@ -317,7 +322,6 @@ species people skills: [moving, fipa] control: simple_bdi
 	action increase_building_resistance (int increase_value)
 	{
 		if (at_home) { home.resistance <- home.resistance + int(increase_value / 2); }
-
 		if (at_work) { work.resistance <- work.resistance + int(increase_value / 2); }
 	}
 	

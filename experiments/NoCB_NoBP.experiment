@@ -1,93 +1,30 @@
 /**
-* Name: NoCBNoBP
+* Name: No Cognitive Biases, No behavior profiles (all residents with same charactristics)
+* 
 * Author: Pierre Blarre
-* Description: This wizard creates a new experiment file.
-* Tags: Tag1, Tag2, TagN
 */
 
-experiment NoCB_NoBP model:'../models/environment.gaml' type:gui {
+model Bushfires_BDI_Cognitive_Biases
 
-	// Boutons d'interaction
-//	action createFire { create fire; }
-//	user_command Create_Fire action: createFire;
-	
-	parameter "Cognitive Biases" var: use_cognitive_biases init: false category: "Cognitive Biases (hit reload after changing this value)";
-	
-	parameter "Firefighters Messages" var: show_firefighters_messages init: true category: "Messages";
-	parameter "Police Messages" var: show_police_messages init: true category: "Messages";
-	parameter "Residents BDI" var: show_residents_BDI init: true category: "Messages";
-	parameter "Cognitive Biases Messages" var: show_cognitive_biases_messages init: true category: "Messages";
-	
-	bool show_firefighters_messages <- false;
-	bool show_police_messages <- false;
-	bool show_residents_BDI <- false;
-	bool show_cognitive_biases_messages <- false;
+import "../models/environment.gaml"
 
-	// Paramètres
-	parameter "Evacuation Reminder (in cycles)" var: evacuation_reminder_cycle category: "Global";
-	parameter "Start hour" var: starting_hour category: "Global" min: 0;
-	parameter "Burning speed (in cycles)" var: burning_speed category: "Global" min: 10;
-	parameter "Wind" var: wind category: "Global" min: 0.0 max: 0.5;
-	parameter "Drought" var: drought category: "Global" min: 0.0 max: 0.5;
-	parameter "Field of View" var: field_of_view category: "Global" min: 10.0 max: 20.0;
-	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0 max: 3.0;
-	parameter "Nb firefighters" var: nb_firefighters category: "Agents" min: 0;
-	parameter "Nb Policeman" var: nb_policemen category: "Agents" min: 0;
-	parameter "Residents" var: nb_residents category: "Residents" min: 0;
+global
+{
+	bool use_cognitive_biases <- false;
+	
+	int nb_residents <- 100;
+	int nb_isolated_and_vulnerable <- 0;
+	int nb_unaware_reactors <- 0;
+	int nb_threat_avoiders <- 0;
+	int nb_threat_monitors <- 0;
+	int nb_can_do_defenders <- 0;
+	int nb_considered_defenders <- 0;
+	int nb_livelihood_defenders <- 0;
+}
 
+experiment NoCB_NoBP parent: Main
+{
 	init { 
-		simulation_name <- "No_Cognitive_Biases";
-		nb_residents <- 100;
-		create resident number: 100;
-	}
-
-	output
-	{
-		// Valeurs monitorées
-		monitor "Current_time" value: current_time;
-		monitor "Fire Size" value: fire_size;
-		monitor "Resident with Cognitive Biases" value: residents_influenced_by_cognitive_biases;
-		monitor "Resident alive" value: residents_alive;
-		monitor "Dead resident" value: residents_dead;
-		monitor "Alerted resident" value: residents_alert;
-		monitor "Resident in safe place" value: residents_bunker;
-		monitor "Buildings damage" value: buildings_damage color: #grey;
-
-		// Visualisation graphique
-		display Global
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
-			}
-		}
-
-		// Visualisation 3D
-		display map type: opengl
-		{
-			species people aspect: sphere3D;
-			species road aspect: base;
-			species resident aspect: sphere3D;
-			species isolated_and_vulnerable aspect: sphere3D;
-			species unaware_reactors aspect: sphere3D;
-			species threat_avoiders aspect: sphere3D;
-			species threat_monitors aspect: sphere3D;
-			species can_do_defenders aspect: sphere3D;
-			species considered_defenders aspect: sphere3D;
-			species livelihood_defenders aspect: sphere3D;
-			species firefighters aspect: sphere3D;
-			species policemen aspect: sphere3D;
-			species waterway aspect: base refresh: false;
-			grid plot transparency: 0.4;
-			species fire aspect: base refresh: true;
-			species city_exit aspect: base transparency: 0.1;
-			species building aspect: base;
-			species firewatch aspect: base;
-			light 1 color: (is_night ? 50 : 230);
-		}
+		simulation_name <- "No_Cognitive_Biases_No_Behavior_Profiles";
 	}
 }
