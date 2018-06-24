@@ -14,43 +14,11 @@ import "environment.gaml"
 *=============================================*/
 species resident parent: people skills: [moving, fipa] control: simple_bdi
 {
-	// Variables
 	bool warned <- false;
 	bool evacuating <- false;
 	bool is_escorted <- false;
 	
-	//Definition of the variables featured in the BDI architecture. ??USEFUL??
-	float plan_persistence <- 1.0; 
-	float intention_persistence <- 1.0;
-	bool probabilistic_choice <- false;
-	
-	float probability_to_react <- 0.70;
-	int nb_of_warning_msg <- 0;
-	
-	//Cognitive Biases
-	//Whether the agent's choices will be influenced or not by the cognitive biases algorithms
-	bool cognitive_biases_influence <- false;
-	bool neglect_of_probability_cb_influence <- false;
-	bool semmelweis_reflex_cb_influence <- false;
-	bool illusory_truth_effect_cb_influence <- false;
-
-	
-    //Beliefs
-	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
-	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
-	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
-	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
-	predicate can_defend_belief <- new_predicate("can_defend_belief",true);
-	predicate i_can_escape <- new_predicate("i_can_escape",true); 
-	
-	//Desires
-	predicate work_desire <- new_predicate("work_desire",10);
-	predicate home_desire <- new_predicate("home_desire",20);
-	predicate call_911_desire <- new_predicate("call_911_desire",30);
-	predicate defend_desire <- new_predicate("defend_desire",40);
-	predicate escape_desire <- new_predicate("escape_desire",50); //desire to escape is the equal to the desire to shelter
-	
-//	//The rules are used to create a desire from a belief. We can specify the priority of the desire with a statement priority.
+	//The rules are used to create a desire from a belief. We can specify the priority of the desire with a statement priority.
 	rule belief: no_danger_belief new_desire: work_desire strength: 10.0 remove_desire: escape_desire;
 	rule belief: potential_danger_belief new_desire: call_911_desire strength: 20.0 remove_desire: work_desire and escape_desire;
 	rule belief: immediate_danger_belief new_desire: escape_desire strength: 30.0 remove_desire: work_desire and home_desire;
@@ -58,37 +26,31 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 
 	init
 	{
-		speed <- rnd(13.0, 18.0) # km / # h;
-//		speed <- rnd(30.0, 50.0) # km / # h; //to fast they never die
+		//Locations
 		home <- one_of(building where (!each.bunker and !each.fire_station and !each.police_station));
-//		location <- any_location_in(home);
 		work <- one_of(building where (each != home and !each.bunker and !each.fire_station and !each.police_station));
-		
-		color <- rgb(0, energy, 0);
-		
-		// Default resident has the threat_avoiders attributes
 		escape_target <- get_closest_safe_place();
-		motivation <- max([0, rnd(2, 3) + motivation]); // Motivation moyenne
-		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); //  Conscients du risque
-		knowledge <- max([0, rnd(3, 5) + knowledge]); // Bonne connaissances
 		
-		//Default :  no danger
+		// Default resident has the threat_avoiders attributes, which is average
+		color <- rgb(0, energy, 0);
+		speed <- rnd(13.0, 18.0) # km / # h; // If you want them faster so they die less use : rnd(30.0, 50.0) 
+		motivation <- max([0, rnd(2, 3) + motivation]); //Average motivation
+		risk_awareness <- max([0, rnd(3, 5) + risk_awareness]); // High awareness
+		knowledge <- max([0, rnd(3, 5) + knowledge]); // Good knowledge
+		
+		//Default belief :  no danger I am safe
 		do add_belief(no_danger_belief,0.5);
 		
-		//do status("init");
-		
- 		//80% are at work, the rest stays at home, doesn't really matter
+ 		//By default, 80% are at work, the rest are at home, doesn't really matter actually
  		//we place them right away, it avoids waiting for them to drive to their work place
 		if(flip(0.8))
 		{
-//			do add_desire(work_desire);
 			location <- any_location_in(work);
 			at_work <- true;
 			at_home <- false;
 		}
 		else
 		{
-//			do add_desire(home_desire);
 			location <- any_location_in(home);
 			at_home <- true;
 			at_work <- false;
@@ -106,30 +68,13 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 
 	// Relexe : Couleur
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, 0); }
-		
-	action status (string msg)
-	{
-		write string(self) + " ("+energy+") : " + msg; 
-		write "B:" + length(belief_base) + ":" + belief_base; 
-		write "D:" + length(desire_base) + ":" + desire_base; 
-		write "I:" + length(intention_base) + ":" + intention_base; 
-	}
-	
-	
-	//Cognitive Biases
-	//Will be about the belief the person thinks it's in danger or not
-	
-	//Around the time of the Black Saturday, the risk of bushfire is high
-	//We assume the agent is totally unsure if there's a fire or not
-	
 	
 	//Cognitive Bias : Neglect of probability
-	//Will influence the agent's decisions on going home or escaping
+	//Will influence the agent's probability_to_react (decisions on going home or escaping)
 	action neglect_of_probability(float perceivedProbability)
 	{
 		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
 		
-//		float ancientBeliefProbability <- probability_to_react;
 		float newBeliefProbability <- probability_to_react + perceivedProbability;
 		
 		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
@@ -256,17 +201,16 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 
 	}
 	
-//	perceive target:self when: alive {
-//	}
-
-	//If the agent perceives a fire it should give the alert and stay alert
+	//If the agent perceives a fire it should give the alert and stay alert, if his awareness is high enough
 	perceive target: plot in: 50.0 # m when: alive and ! in_safe_place and ! has_belief(potential_danger_belief)  {
 		if(burning)
 		{
-			ask myself{
-				do add_belief(potential_danger_belief);
-//				do add_desire(call_911_desire);
-//				do status("Adding potential_danger_belief and home_intention");
+			ask myself {
+				if (risk_awareness > 2)
+				{
+					do add_belief(potential_danger_belief); // will add call_911_desire desire by rule
+					if(show_residents_BDI) { do status("potential_danger_belief added"); }
+				}
 			}
 		}
 	}
@@ -276,23 +220,16 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		if(burning)
 		{
 			ask myself{
-////				energy <- energy - 0.01;
-//				if(energy <= 0)  {
-//					alive <-false;
-//				}
-//				else 
 				if(!has_desire(escape_desire))
 				{
-//					do remove_desire(work_desire);
 					do remove_belief(no_danger_belief);
 					do remove_belief(potential_danger_belief);
 					
 					do add_belief(immediate_danger_belief);
-//					do add_desire(escape_desire);
 					
 					escape_target <- get_closest_safe_place();
 					
-//					do status("I'm hurt, need to escape");
+					if(show_residents_messages) { do status("I'm hurt, need to escape"); }
 				}
 			}
 		}
@@ -305,7 +242,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			at_home <- false;
 			at_work <- true;
 			do remove_desire(work_desire);
-//			do status("I'm at work");
+			if(show_residents_messages) { do status("I'm at work"); }
 		}
 	}
 	
@@ -316,7 +253,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			at_home <- true;
 			at_work <- false;
 			do remove_desire(home_desire);
-//			do status("I'm at home");
+			if(show_residents_messages) { do status("I'm at home"); }
 		}
 	}
 
@@ -324,58 +261,25 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	{
 		do send_msg([one_of(firefighters where each.alive)], nil, "There's a fire");
 		warning_sent <- true;
-//		do status("I called 911");
+		if(show_residents_messages) { do status("I called 911"); }
 	}
 
 	plan escape_desire intention: escape_desire priority: 4 when: alive and ! in_safe_place finished_when: in_safe_place
 	{
-//		write (string(self) + " : I'm escaping");
 		if (bool(go_to(escape_target)))
 		{
 			at_home <- false;
 			at_work <- false;
 			in_safe_place <- true;
-			write (string(self) + " : I escaped safely");
+			if(show_residents_messages) { write (string(self) + " : I escaped safely"); }
 		}
 	}
 	
+	//TODO implement defense
 //	plan defend intention: defend_intention when: alive and ! in_safe_place
 //	{
 //		write (string(self) + " : I want to defend");
 //	}
-	
-	
-//	// Donner l'alerte au feu si : en vie, n'est pas trop égoîste, est en alerte
-//	reflex saw_the_fire when: alive and on_alert and !warning_sent
-//	{
-//
-//	// Si la conscience des risques d'une personne est supérieure à la moyenne ...
-//		if (risk_awareness > 2)
-//		{
-//		// ...elle alerte les pompiers
-//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
-//			// do start_conversation ( to : [one_of(firefighters where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
-//			warning_sent <- true;
-//			belief <- potential_danger;
-//		}
-//
-//	}
-	
-	
-//	//Perceives fire, give the alert -> === CB should influence decision =======
-//	//If the he thinks the danger isn't real (or not)
-////	perceive target:self when: alive and on_alert and !warning_sent {
-//	perceive target:self when: alive and !warning_sent and (has_belief(potential_danger_belief) or has_belief(immediate_danger_belief))  {
-//		
-//		write string(self) + " : Danger perceived ";
-//		if(risk_awareness > 2)
-//		{
-//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
-//			warning_sent <- true;
-////			belief <- potential_danger_belief;
-//		}
-//	}
-
 
 	action back_to_normal_state
 	{
@@ -385,11 +289,6 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			do remove_all_beliefs(immediate_danger_belief);
 			do add_belief(no_danger_belief);
 			
-			do remove_desire(home_desire);
-			
-//			belief <- no_danger_belief;
-//			intention <- desires[0];
-
 			speed <- speed - motivation;
 			in_safe_place <- false;
 			on_alert <- false;
@@ -397,8 +296,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			warned <- false;
 			evacuating <- false;
 			
-			do status("back to normal");
-			
+			if(show_residents_messages) { do status("back to normal"); }
 		}
 	}
 

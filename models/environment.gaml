@@ -87,8 +87,11 @@ global
 	bool do_pause <- false;
 	string simulation_name <- "No_Cognitive_Biases";
 	
+	//Show 
 	bool show_firefighters_messages <- false;
 	bool show_police_messages <- false;
+	bool show_people_messages <- false;
+	bool show_residents_messages <- false;
 	bool show_residents_BDI <- false;
 	bool show_cognitive_biases_messages <- false;
 
@@ -98,9 +101,9 @@ global
 	bool evacution_city_reported <- false; //true when the evacuation alert has been issued
 	
 	//Map
-	file bounds_shapefile <- file("../includes/bounds.shp");
-	file buildings_shapefile <- file("../includes/building.shp");
-	file roads_shapefile <- file("../includes/road.shp");
+	file bounds_shapefile <- file("../assets/shapefiles/bounds.shp");
+	file buildings_shapefile <- file("../assets/shapefiles/building.shp");
+	file roads_shapefile <- file("../assets/shapefiles/road.shp");
 	//file waterway_shapefile <- file("../includes/waterway.shp");
 	geometry shape <- envelope(envelope(buildings_shapefile) + envelope(roads_shapefile) + envelope(bounds_shapefile));
 	graph the_graph;
@@ -208,7 +211,7 @@ species fire
 	aspect base { draw triangle(size) color: color depth: 5 # m; }
 }
 
-//Plots are used to spread the fire. They are used to hurt people and damage buildings
+//Extending Grid Species : Plots are used to spread the fire and people's detection. They are also used to create the dammage to people and buildings
 grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: false use_individual_shapes: false
 {
 	int id <- 1;
@@ -337,9 +340,9 @@ species building schedules: [] frequency: 0
 	float damage <- 0.0;
 
 	float height <- 10 # m + rnd(30) # m;
-	string texture <- "../images/bd_text.png";
-	string roof_texture <- "../images/bd_roof.png";
-	string bunker_texture <- "../images/bunker_txt.png";
+	string texture <- "../assets/images/bd_text.png";
+	string roof_texture <- "../assets/images/bd_roof.png";
+	string bunker_texture <- "../assets/images/bunker_txt.png";
 
 	aspect base
 	{

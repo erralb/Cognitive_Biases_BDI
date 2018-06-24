@@ -18,11 +18,9 @@ import "environment.gaml"
 
 species people skills: [moving, fipa] control: simple_bdi
 {
-
 	// Physical attributes
 	int id <- 1;
-//	int energy <- rnd(200, 255);
-	float energy <- 200.0;
+	float energy <- float(rnd(200, 255));
 	bool alive <- true;
 	point target;
 	rgb color <- # green;
@@ -37,48 +35,72 @@ species people skills: [moving, fipa] control: simple_bdi
 	bool fighting_fire <- false;
 	bool go_fighting <- false;
 	
-
-	// OLD BDI
-	list<string> desires <- nil;
-	string intention <- nil;
-	string belief <- "no_danger_belief";
-	
-	// OLD BDI Intentions
-	string run_away <- "Escape";
-	string defend <- "Defend";
-	string protect <- "Protect";
-	string ask_for_help <- "I need help";
-
-	// OLD BDI Beliefs
-	string no_danger <- "No danger";
-	string potential_danger <- "Potential danger";
-	string immediate_danger <- "Immediate danger";
-	
 	// Psychological attributes
 	int motivation; //higher motivation increases speed and defense capacity
 	int risk_awareness; //higher awareness will increase response to messages and escape_intention
 	int knowledge; //level of knowledge crisis management and technical abilities -> should influend cognitive biases
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
+	
+	float probability_to_react <- 0.70; //by default we suppose people will most likely react to an alert
+	int nb_of_warning_msg <- 0;
+	
+	//Definition of the variables featured in the BDI architecture. 
+	//How is this used, I am not sure. TODO: research how this should be used
+	float plan_persistence <- 1.0; 
+	float intention_persistence <- 1.0;
+	bool probabilistic_choice <- false;
+	
+	//Cognitive Biases
+	//Whether the agent's choices will be influenced or not by the cognitive biases algorithms
+	bool cognitive_biases_influence <- false;
+	bool neglect_of_probability_cb_influence <- false;
+	bool semmelweis_reflex_cb_influence <- false;
+	bool illusory_truth_effect_cb_influence <- false;
+	
+    //Beliefs
+	predicate no_danger_belief <- new_predicate("no_danger_belief",true);
+	predicate potential_danger_belief <- new_predicate("potential_danger_belief",true);
+	predicate immediate_danger_belief <- new_predicate("immediate_danger_belief",true);
+	predicate risk_of_fires_today <- new_predicate("risk_of_fire",true);
+	predicate can_defend_belief <- new_predicate("can_defend_belief",true);
+	predicate i_can_escape <- new_predicate("i_can_escape",true); 
+	
+	//Desires
+	predicate work_desire <- new_predicate("work_desire",10);
+	predicate home_desire <- new_predicate("home_desire",20);
+	predicate call_911_desire <- new_predicate("call_911_desire",30);
+	predicate defend_desire <- new_predicate("defend_desire",40);
+	predicate escape_desire <- new_predicate("escape_desire",50); //desire to escape is the equal to the desire to shelter
+	
+	// OLD BDI - Left for now for firefighters and policemen compatibility TODO convert them to simple_bdi architecture
+	list<string> desires <- nil;
+	string intention <- nil;
+	string belief <- "no_danger_belief";
+	// OLD BDI Intentions
+	string run_away <- "Escape";
+	string defend <- "Defend";
+	string protect <- "Protect";
+	string ask_for_help <- "I need help";
+	// OLD BDI Beliefs
+	string no_danger <- "No danger";
+	string potential_danger <- "Potential danger";
+	string immediate_danger <- "Immediate danger";
 
-	// Init
 	init
 	{
 		ids <- ids + 1;
 		id <- ids;
 
-		// training and will influence psychological attributes
-		training <- trained_population ? 2 : 0;
-		
+		// these attributes will vary for different behavior profiles
+		training <- trained_population ? 2 : 0; // if training set to true it will influence psychological attributes
 		risk_awareness <- training + fear_of_fire;
 		motivation <- training - fear_of_fire;
 		knowledge <- training - fear_of_fire;
-		
-		// these attributes will be different for each personnalities
 	}
 
-	// Graphic aspect
 	aspect sphere3D { draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color; }
+//	aspect sphere3D { draw circle(3) at: { location.x, location.y } color: color; } //2d version
 	
 	action status (string msg)
 	{
@@ -86,44 +108,32 @@ species people skills: [moving, fipa] control: simple_bdi
 		 
 		if(show_residents_BDI)
 		{
-	//		write "Plans : " + plans_base;
 			write "B:" + length(belief_base) + ":" + belief_base; 
 			write "D:" + length(desire_base) + ":" + desire_base; 
 			write "I:" + length(intention_base) + ":" + intention_base; 
 		}
 	}
 	
-	// Go somewhere
+	// Go somewhere with the road network
 	// @params : destination (agent)
 	// @returns : boolean (reached destination or not)
 	action go_to (agent a)
 	{
 		if (!(target overlaps a)) { target <- any_location_in(a); } // set target destination to agent location
-
 		do goto target: target on: road_network; // move along roads
-
-		// reached destination
 		if (location = target) { return true; } 
 		else { return false; }
 	}
 	
-	
-//	// Donner l'alerte au feu si : en vie, n'est pas trop égoîste, est en alerte
-//	reflex saw_the_fire when: alive and on_alert and !warning_sent
-//	{
-//
-//	// Si la conscience des risques d'une personne est supérieure à la moyenne ...
-//		if (risk_awareness > 2)
-//		{
-//		// ...elle alerte les pompiers
-//			do send_msg([one_of(firefighters where each.alive)], nil, 'Il y a un feu!');
-//			// do start_conversation ( to : [one_of(firefighters where each.alive)], protocol : 'fipa-propose', performative : 'propose', contents : ['Il y a un feu!'] );
-//			warning_sent <- true;
-//			belief <- potential_danger_belief;
-//		}
-//
-//	}
-
+	//for now unused, but should be used if all roads become unusable
+	action walk (agent a)
+	{
+		speed <- rnd(5.0, 10.0) # km / # h; //We assume they are at least going at average walking speed
+		if (!(target overlaps a)) { target <- any_location_in(a); } // set target destination to agent location
+		do goto target: target; // move anywhere
+		if (location = target) { return true; } //reached 
+		return false;
+	}
 
 	//Send message to other agents
 	action send_msg (list<agent> main_recipients, list<agent> main_secondary, string msg)
@@ -134,13 +144,185 @@ species people skills: [moving, fipa] control: simple_bdi
 		}
 		if (!empty(main_recipients))
 		{
-//			write "911 conversation started";
 			do start_conversation(to: main_recipients, protocol: 'fipa-propose', performative: 'propose', contents: [msg]);
+		}
+	}
+
+	//@returns agent
+	action get_closest_safe_place
+	{
+		float dist_to_closest_bunker;
+		float dist_to_closest_exit;
+		building closest_bunker;
+		city_exit closest_exit;
+		
+		if (nb_bunker > 0)
+		{
+			closest_bunker <- (building where (each.bunker) closest_to location);
+			dist_to_closest_bunker <- closest_bunker distance_to location;
+		}
+
+		if (nb_exit > 0)
+		{
+			closest_exit <- city_exit closest_to location;
+			dist_to_closest_exit <- closest_exit distance_to location;
+		}
+
+		if (dist_to_closest_bunker < dist_to_closest_exit and closest_bunker != nil)
+		{
+			return closest_bunker;
+		} 
+		else if (closest_exit != nil)
+		{
+			return closest_exit;
+		}
+
+		return agent(nil);
+	}
+
+	//Get info on close fire(s) - is there one and if yes from where?
+	// returns : bool fire is close, bool fire_is_north, bool fire_is_west
+	action get_closest_fire_at_hurting_distance
+	{
+		bool danger <- false;
+		bool fire_is_north <- false;
+		bool fire_is_west <- false;
+		list<plot> plotS_in_fire <- plot at_distance field_of_view where each.burning; //get burning plots in view distance
+
+		// S'il existe des feux à distance dangeureuse
+		if (length(plotS_in_fire) > 0)
+		{
+			danger <- true;
+			plot plot_in_fire <- plotS_in_fire closest_to location; //get the closest one from location
+			if (plot_in_fire.location.x < location.x) { fire_is_west <- true; }
+			if (plot_in_fire.location.y < location.y) { fire_is_north <- true; }
+		}
+
+		return [danger, fire_is_north, fire_is_west];
+	}
+
+
+	// Get the city exit to try avoid the fire
+	// @params : information du feu, bool:trouver le plus proche, inclure les bunker
+	// @returns : target point
+	action get_city_exit_opposed_to_fire (list<bool> fire_direction, bool m_closest, bool include_bunker)
+	{
+		bool fire_is_north <- fire_direction[1];
+		bool fire_is_west <- fire_direction[2];
+		list<agent> exit_at_Y <- nil;
+		list<agent> exit_at_X <- nil;
+		list<agent> exits_found <- nil;
+		point target_point <- nil;
+
+		// Get exit coordinates
+		// North exits at south from fire. West exits as East from fire. Etc.
+		exit_at_Y <- fire_is_north ? city_exit where (each.location.y > location.y) : city_exit where (each.location.y < location.y);
+		exit_at_X <- fire_is_west ? city_exit where (each.location.x > location.x) : city_exit where (each.location.x < location.x);
+		if (include_bunker) //Only when bunker buildings are activated
+		{
+			exit_at_Y <- exit_at_Y + (fire_is_north ? building where (each.bunker and each.location.y > location.y) : building where (each.bunker and each.location.y < location.y));
+			exit_at_X <- exit_at_X + (fire_is_west ? building where (each.bunker and each.location.x > location.x) : building where (each.bunker and each.location.x < location.x));
+		}
+
+		if (length(exit_at_Y) > 0)
+		{
+			if (length(exit_at_X) > 0)
+			{
+				exits_found <- exit_at_Y inter exit_at_X;
+				if (length(exits_found) = 0) { exits_found <- exit_at_Y; }
+			}
+		} 
+		else
+		{
+			if (length(exit_at_X) > 0) { exits_found <- exit_at_X; }
+		}
+
+		if (length(exits_found) > 0)
+		{
+			agent exit_f <- m_closest ? exits_found closest_to location : one_of(exits_found);
+			target_point <- exit_f != nil ? any_point_in(exit_f) : nil;
+		}
+
+		return target_point;
+	}
+
+
+
+	// TODO replaced with simple_bdi "perceives"
+	// Left for emergency services compatibility
+	// @returns  : boolean
+	action check_if_danger_is_near
+	{
+		list<bool> directions <- get_closest_fire_at_hurting_distance();
+		// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
+		return directions;
+	}
+
+
+	// TODO replaced with simple_bdi "plan" -> escape
+	// @params : fire info (from get_closest_fire_at_hurting_distance)
+	action react_to_danger (list<bool> directions)
+	{
+		//  if directions[0] is true then there is a danger
+		// if my risk_awareness isn't null => I change direction
+		if (directions[0] and risk_awareness > 0)
+		{
+			if(show_people_messages) { 
+				do status("I perceived a danger at North ? => " + directions[1] + " : West ? =>" + directions[2]);
+			}
+
+			// Default, I go opposite from the fire
+			bool include_bunker <- false;
+			bool find_the_nearest <- false;
+
+			// But if my knowledge is high, then I know where are the nearest city exits and the bunker locations
+			if (knowledge >= 3)
+			{
+				include_bunker <- true;
+				find_the_nearest <- true;
+			}
+
+			// Search for my target
+			city_exit plan_b <- get_city_exit_opposed_to_fire(directions, find_the_nearest, include_bunker);
+			escape_target <- plan_b != nil ? plan_b : escape_target;
+			if(show_people_messages) { do status("I'm trying to escape through " + escape_target); }
 		}
 
 	}
 
-	// Save data into a CSV file
+	//Simulate watering terrain and cutting vegetation to avoid fire spreading
+	action increase_terrain_resistance (int increase_value)
+	{
+		building bd_location <- at_home ? home : (at_work ? work : nil);
+		if (bd_location != nil)
+		{
+			// neighboring nature plots
+			list<plot> nature_plots <- plot where (!each.is_road and each.heat > -5.0) overlapping bd_location;
+
+			//increase resistance
+			if (length(nature_plots) > 0)
+			{
+				// Treat burning plots first
+				plot a_plot <- one_of(nature_plots where each.burning);
+				if (a_plot = nil) { a_plot <- one_of(nature_plots); }
+
+				// Dimish plot heat
+				a_plot.heat <- a_plot.heat - increase_value / 2;
+				if (a_plot.heat <= -5.0) { a_plot.color <- # magenta; }
+			}
+		}
+	}
+
+	//Simulate  watering building and cutting vegetation around it to avoid fire spreading
+	action increase_building_resistance (int increase_value)
+	{
+		if (at_home) { home.resistance <- home.resistance + int(increase_value / 2); }
+
+		if (at_work) { work.resistance <- work.resistance + int(increase_value / 2); }
+	}
+	
+	
+	// Save data into CSV files
 	action save_result
 	{
 		if (!result_saved)
@@ -193,266 +375,8 @@ species people skills: [moving, fipa] control: simple_bdi
 
 		result_saved <- true;
 	}
-	//====================== Fin action save_result ================================================
-
-	//======================  Début  action get_closest_safe_place ================================================
-	// Récupérer l'issue la plus proches
-	// return : agent : issue
-	action get_closest_safe_place
-	{
-
-	// On recherche l'issue la plus proche (quitter la ville ou aller dans un bunker)
-		float dist_to_closest_bunker;
-		float dist_to_closest_exit;
-		building closest_bunker;
-		city_exit closest_exit;
-		if (nb_bunker > 0)
-		{
-			closest_bunker <- (building where (each.bunker) closest_to location);
-			dist_to_closest_bunker <- closest_bunker distance_to location;
-		}
-
-		if (nb_exit > 0)
-		{
-			closest_exit <- city_exit closest_to location;
-			dist_to_closest_exit <- closest_exit distance_to location;
-		}
-
-		if (dist_to_closest_bunker < dist_to_closest_exit and closest_bunker != nil)
-		{
-			return closest_bunker;
-		} else
-		{
-			if (closest_exit != nil)
-			{
-				return closest_exit;
-			}
-
-		}
-
-		// Si aucun sortie trouvée, on renvois 
-		return agent(nil);
-	}
-	//====================== Fin action get_closest_safe_place ================================================
-
-
-	//======================  Début  action get_closest_fire_at_hurting_distance ================================================
-	// Récupérer la direction du feu à distance dangeureuse
-	// return : bool fire is close, bool fire_is_north, bool fire_is_west
-	action get_closest_fire_at_hurting_distance
-	{
-
-	// Var
-		bool danger <- false;
-		bool fire_is_north;
-		bool fire_is_west;
-		list<plot> plotS_in_fire <- plot at_distance field_of_view where each.burning;
-
-		// S'il existe des feux à distance dangeureuse
-		if (length(plotS_in_fire) > 0)
-		{
-			danger <- true;
-
-			// Récupération du feux le plus proche
-			plot plot_in_fire <- plotS_in_fire closest_to location;
-			if (plot_in_fire.location.x < location.x)
-			{
-			// Le feu est à l'ouest
-				fire_is_west <- true;
-			} else
-			{
-			// Le feu est à l'est
-				fire_is_west <- false;
-			}
-
-			if (plot_in_fire.location.y < location.y)
-			{
-			// Le feu est au nord
-				fire_is_north <- true;
-			} else
-			{
-			// Le feu est au sud
-				fire_is_north <- false;
-			}
-
-		}
-
-		return [danger, fire_is_north, fire_is_west];
-	}
-	//====================== Fin action get_closest_fire_at_hurting_distance ================================================
-
-
-	//======================  Début  action get_city_exit_opposed_to_fire ================================================
-	// Récupérer la sorties (la plus proche ou non) opposée au feux
-	// paramètre : information du feu, bool:trouver le plus proche, inclure les bunker
-	// return : issue trouvée
-	action get_city_exit_opposed_to_fire (list<bool> fire_direction, bool m_closest, bool include_bunker)
-	{
-
-	// Je me dirige vers une sortie opposée au feu
-		bool fire_is_north <- fire_direction[1];
-		bool fire_is_west <- fire_direction[2];
-		list<agent> exit_at_Y <- nil;
-		list<agent> exit_at_X <- nil;
-		list<agent> exits_found <- nil;
-		point target_point <- nil;
-
-		// Récupération des sortie opposées en Y et en X
-		// (= toutes les sorties nords sur le feu est au sud et toutes les sorties ouest sir le feu est à l'est)
-		exit_at_Y <- fire_is_north ? city_exit where (each.location.y > location.y) : city_exit where (each.location.y < location.y);
-		exit_at_X <- fire_is_west ? city_exit where (each.location.x > location.x) : city_exit where (each.location.x < location.x);
-		if (include_bunker)
-		{
-			exit_at_Y <- exit_at_Y + (fire_is_north ? building where (each.bunker and each.location.y > location.y) : building where (each.bunker and each.location.y < location.y));
-			exit_at_X <- exit_at_X + (fire_is_west ? building where (each.bunker and each.location.x > location.x) : building where (each.bunker and each.location.x < location.x));
-		}
-
-		// S'il existe au moins une sortie opposée en Y
-		if (length(exit_at_Y) > 0)
-		{
-		// On essaye de combiner les sorties opposées en X et en Y
-			if (length(exit_at_X) > 0)
-			{
-				exits_found <- exit_at_Y inter exit_at_X;
-				// Si aucune sortie ne correspond sur X et Y
-				if (length(exits_found) = 0)
-				{
-				// on ne s'interresse qu'aux sorties opposées en Y
-					exits_found <- exit_at_Y;
-				}
-
-			}
-
-		} else
-		{
-		// Aucune sorties n'est opposées  en Y
-		// On regarde s'il en existe au moins une en X
-			if (length(exit_at_X) > 0)
-			{
-				exits_found <- exit_at_X;
-			}
-
-		}
-
-		// S'il une sortie opposée a été trouvée
-		if (length(exits_found) > 0)
-		{
-
-		// On récupère la plus proche ou non en fonction du paramètre m_closest
-			agent exit_f <- m_closest ? exits_found closest_to location : one_of(exits_found);
-			target_point <- exit_f != nil ? any_point_in(exit_f) : nil;
-		}
-
-		return target_point;
-	}
-	//====================== Fin action get_city_exit_opposed_to_fire ================================================
-
-
-
-	//======================  Début  action check_if_danger_is_near ================================================
-	// Regarder s'il existe un danger prche
-	// return : bool: danger proche
-	action check_if_danger_is_near
-	{
-		// Je regarde si un feu est à distance de danger
-		list<bool> directions <- get_closest_fire_at_hurting_distance();
-
-		// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
-		return directions;
-	}
-	//====================== Fin action check_if_danger_is_near ================================================
-
-	//======================  Début  action react_to_danger ================================================
-	// Se déplacer vers une destination
-	// paramètre : infos sur le feu
-	action react_to_danger (list<bool> directions)
-	{
-	// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
-		if (directions[0] and risk_awareness > 0)
-		{
-			write string(self) + " : il y a un danger ";
-			write string(self) + " : Le feu est proche = feux au nord ? => " + directions[1] + " : feux à l'ouest ? =>" + directions[2];
-
-			// Par défaut, je vais vers une des sorties opposées car je ne connais ni la plus proche, ni les bunkers
-			bool include_bunker <- false;
-			bool find_the_nearest <- false;
-
-			// Mais si ma connaissance est supérieur à la moyenne
-			if (knowledge >= 3)
-			{
-				// Je connais les bunkers et  les soties les plus proches
-				include_bunker <- true;
-				find_the_nearest <- true;
-			}
-
-			// Je recherche un plan B en fonction de mes connaissances 
-			city_exit plan_b <- get_city_exit_opposed_to_fire(directions, find_the_nearest, include_bunker);
-
-			// Si j'en ai trouvé un, il devient ma nouvelle destination
-			escape_target <- plan_b != nil ? plan_b : escape_target;
-			write string(self) + " : je vais vers " + escape_target;
-		}
-
-	}
-	//====================== Fin action react_to_danger ================================================
-
-
-	//mouiller terrain / couper herbe -> augmenter la resitance au feu
-	action increase_terrain_resistance (int increase_value)
-	{
-		building bd_location <- at_home ? home : (at_work ? work : nil);
-		if (bd_location != nil)
-		{
-
-		//si de la nature est présente autour de location
-			list<plot> nature_plots <- plot where (!each.is_road and each.heat > -5.0) overlapping bd_location;
-
-			//augmente la resistance au feu du point nature
-			if (length(nature_plots) > 0)
-			{
-			// Si l'un des plots autour de chez moi est en feu, je le priorise
-				plot a_plot <- one_of(nature_plots where each.burning);
-
-				// Si aucun plot n'est en feu, j'en prend un aléatoirement
-				if (a_plot = nil)
-				{
-					a_plot <- one_of(nature_plots);
-				}
-
-				// J'humidifie en fonction 
-				a_plot.heat <- a_plot.heat - increase_value / 2;
-				if (a_plot.heat <= -5.0)
-				{
-					a_plot.color <- # magenta;
-				}
-
-			}
-
-		}
-
-	}
-
-	//renforce batiment où il se trouve
-	action increase_building_resistance (int increase_value)
-	{
-		if (at_home)
-		{
-			home.resistance <- home.resistance + int(increase_value / 2);
-		}
-
-		if (at_work)
-		{
-			work.resistance <- work.resistance + int(increase_value / 2);
-		}
-
-	}
+	
 
 }
-
-
-
-
-
-
 
 
