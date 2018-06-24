@@ -71,9 +71,17 @@ global
 	int nb_considered_defenders <- 10;
 	int nb_livelihood_defenders <- 10;
 	
-	list<resident> every_resident <- nil update: resident union isolated_and_vulnerable union unaware_reactors union threat_avoiders union threat_monitors union can_do_defenders union considered_defenders union livelihood_defenders;
+	list<resident> every_resident <- nil update: resident union can_do_defenders union considered_defenders union isolated_and_vulnerable union livelihood_defenders union threat_avoiders union threat_monitors union unaware_reactors ;
 	list<resident> every_resident_alive <- nil update: every_resident where each.alive;
 	list<people> every_people_alive <- nil update: every_resident_alive + (firefighters + policemen) where each.alive;
+	
+	list<can_do_defenders> can_do_defenders_alive <- nil update: can_do_defenders where each.alive;
+	list<considered_defenders> considered_defenders_alive <- nil update: considered_defenders where each.alive;
+	list<isolated_and_vulnerable> isolated_and_vulnerable_alive <- nil update: isolated_and_vulnerable where each.alive;
+	list<livelihood_defenders> livelihood_defenders_alive <- nil update: livelihood_defenders where each.alive;
+	list<threat_avoiders> threat_avoiders_alive <- nil update: threat_avoiders where each.alive;
+	list<threat_monitors> threat_monitors_alive <- nil update: threat_monitors where each.alive;
+	list<unaware_reactors> unaware_reactors_alive <- nil update: unaware_reactors where each.alive;
 	
 	//Cognitive Biases
 	bool use_cognitive_biases <- true;
@@ -178,6 +186,14 @@ global
 	int residents_bunker <- 0 update: length(every_resident_alive where each.in_safe_place);
 	int residents_influenced_by_cognitive_biases <- 0 update: length(every_resident where each.cognitive_biases_influence);
 	float buildings_damage <-0.0 update:  (building sum_of (each.damage )  / length( building ) ) /255;
+	
+	int cdd_alive <- 0 update: length(can_do_defenders);
+	int cd_alive <- 0 update: length(considered_defenders);
+	int iv_alive <- 0 update: length(isolated_and_vulnerable);
+	int ld_alive <- 0 update: length(livelihood_defenders);
+	int ta_alive <- 0 update: length(threat_avoiders);
+	int tm_alive <- 0 update: length(threat_monitors);
+	int ur_alive <- 0 update: length(unaware_reactors);
 }
 
 
@@ -192,7 +208,7 @@ experiment Main type:gui
 	parameter "Firefighters Messages" var: show_firefighters_messages init: true category: "Messages";
 	parameter "Police Messages" var: show_police_messages init: true category: "Messages";
 	parameter "Residents Messages" var: show_residents_messages init: true category: "Messages";
-	parameter "BDI Informations" var: show_residents_BDI init: true category: "Messages";
+	parameter "BDI Information" var: show_residents_BDI init: true category: "Messages";
 	parameter "Cognitive Biases Messages" var: show_cognitive_biases_messages init: true category: "Messages";
 	
 	parameter "Start hour" var: starting_hour category: "Global" min: 0;
@@ -207,13 +223,13 @@ experiment Main type:gui
 	parameter "Nb Policeman" var: nb_policemen category: "Emergency Services" min: 0;
 
 	parameter "Residents" var: nb_residents category: "Residents" min: 0;
-	parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
-	parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
-	parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
-	parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
-	parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
-	parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
-	parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+    parameter "Can do defenders" var: nb_can_do_defenders category: "Residents" min: 0;
+    parameter "Considered defenders" var: nb_considered_defenders category: "Residents" min: 0;
+    parameter "Isolated & Vulnerable" var: nb_isolated_and_vulnerable category: "Residents" min: 0;
+    parameter "Livelihood defenders" var: nb_livelihood_defenders category: "Residents" min: 0;
+    parameter "Threat avoiders" var: nb_threat_avoiders category: "Residents" min: 0;
+    parameter "Threat monitors" var: nb_threat_monitors category: "Residents" min: 0;
+    parameter "Unaware reactors" var: nb_unaware_reactors category: "Residents" min: 0;
 	
 	init { 
 		
@@ -241,6 +257,14 @@ experiment Main type:gui
 		monitor "Alerted" value: residents_alert;
 		monitor "Safe" value: residents_bunker;
 		
+		monitor "Can Do defenders" value: cdd_alive;
+		monitor "Considered Defenders" value: cd_alive;
+		monitor "Isolated and vulnerable" value: iv_alive;
+		monitor "Livelihood Defenders" value: ld_alive;
+		monitor "Threat Avoiders" value: ta_alive;
+		monitor "Threat monitors" value: tm_alive;
+		monitor "Unaware reactors" value: ur_alive;
+		
 		monitor "With Cognitive Biases" value: residents_influenced_by_cognitive_biases;
 		monitor "Cognitive Biases influence" value: nb_cb_influences;
 		monitor "Warning ignored because Cognitive Biases" value: nb_ignored_msg_while_cb;
@@ -250,7 +274,7 @@ experiment Main type:gui
 		// Graphs
 		display Global
 		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+			chart "Global" type: series size: { 1, 1 } position: { 0, 0 }
 			{
 				data "Fire Size" value: fire_size / 50 color: # orange;
 				data "Cognitive Biases influence" value: cognitive_biases_influence_occurence color: # blue;
