@@ -380,6 +380,72 @@ species people skills: [moving, fipa] control: simple_bdi
 		result_saved <- true;
 	}
 	
+	
+	//Cognitive Bias : Neglect of probability
+	//Will influence the agent's probability_to_react (decisions on going home or escaping)
+	action neglect_of_probability(float perceivedProbability)
+	{
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
+		float newBeliefProbability <- probability_to_react + perceivedProbability;
+		
+		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
+		
+		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
+		{
+			newBeliefProbability <- 0.0;
+		}
+		else if( newBeliefProbability  < 0.34 and (risk_awareness > 3 or knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
+		{
+			newBeliefProbability <- 0.9;
+		}
+		else if( newBeliefProbability  > 0.34 ) //3 under-estimate a high and medium probability of something happening
+		{
+			newBeliefProbability <- 0.2;
+		}
+		
+		probability_to_react <- newBeliefProbability;
+	}
+	
+	
+	//Cognitive Bias : Semmelweis Reflex : Clinging to a belief
+	//Will influence the agent's belief on no / potential / immediate danger : Should I keep my belief/certainty?
+	action semmelweis_reflex(float beliefProbability)
+	{
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
+		if (beliefProbability = 0 and nb_of_warning_msg <= 3) //he does not believe the danger will occur, I keep my belief 
+		{
+			return true;
+		}
+		else if (beliefProbability > 0 and nb_of_warning_msg > 3) //I started to believe, I should change my certainty
+		{
+			return false;
+		}
+		
+		return true;
+	}
+	
+	
+	//Cognitive Illusory Truth effect
+	//Will re-inforce agent's belief
+	// "Info" = no / potential / immediate danger
+	// "nb of occurences" = received_warnings
+	action illusory_truth_effect(predicate beliefName, float perceivedProbability)
+	{
+		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		
+		if( ! has_belief(beliefName) )
+		{
+			do add_belief(beliefName, perceivedProbability);
+		}
+		else //reinforce belief strength
+		{
+			float illusoryProbability <- perceivedProbability * nb_of_warning_msg;
+			do remove_belief(beliefName);
+			do add_belief(beliefName, illusoryProbability);
+		}
+	}
 
 }
 
