@@ -33,6 +33,8 @@ species threat_monitors parent: resident
 		knowledge <- max([0, rnd(2, 4) + knowledge]);
 
 	}
+	
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 50.0 remove_desire: work_desire and home_desire and defend_desire;
 
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : # purple; }
 }

@@ -42,6 +42,9 @@ species isolated_and_vulnerable parent: resident
 		//Default beliefs
 		do add_belief(no_danger_belief,0.7);
 	}
+	
+	//then can only escape
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 40.0 remove_desire: work_desire and home_desire and can_defend_belief;
 
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, energy); }
 	

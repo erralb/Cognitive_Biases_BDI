@@ -114,7 +114,10 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 				// Burn : - 30 energy  at distance 1,  -15 at 2,  -10 at 3
 				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
 				
-				if (victim.energy <= 0) { victim.alive <- false; } // no more energy, person's dead
+				if (victim.energy <= 0) {  // no more energy, person's dead
+					if(show_residents_messages and victim.alive) { ask victim { do status("I'm dead :-("); } } //little to trick to display the message only once
+					victim.alive <- false;
+				}
 				else if (string(victim) contains "resident") { victim.speed <- victim.speed - rnd(0, 0.3); } // slow down hurt people
 			}
 
@@ -169,22 +172,32 @@ species building schedules: [] frequency: 0
 	int resistance <- rnd(100, 200);
 	float damage <- 0.0;
 
-	float height <- 10 # m + rnd(30) # m;
+	float height <- simple_buildings ? 5 # m + rnd(10) # m : 10 # m + rnd(30) # m;
+	
 	string texture <- "../assets/images/bd_text.png";
 	string roof_texture <- "../assets/images/bd_roof.png";
 	string bunker_texture <- "../assets/images/bunker_txt.png";
 
 	aspect base
 	{
-		// graded gray, turning to black as the building burns
-		draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
-		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
-		black depth: height;
+		if(!simple_buildings)
+		{
+			// graded gray, turning to black as the building burns
+			draw shape texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
+			blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
+			black depth: height;
+		}
+		else
+		{
+			//A more simple shape for using less ressource
+			draw circle(5 # m) color: bunker ? # yellow 
+				: (fire_station ? # red 
+				: (police_station ? blend(# black, #blue, damage / resistance) 
+				: ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) 
+				: blend(# black, # gray, damage / resistance) ) ) ) 
+			border: #black depth: height;
+		}
 		
-		//A more simple shape for using less ressource
-//		draw circle(5 # m) texture: bunker ? [bunker_texture, bunker_texture] : [roof_texture, texture] color: bunker ? # yellow : (fire_station ? # red : (police_station ? blend(# black, #
-//		blue, damage / resistance) : ((resistance > 230 and damage = 0.0) ? blend(# black, # magenta, damage / resistance) : blend(# black, # white, damage / resistance)))) border: #
-//		black depth: height;
 	}
 }
 

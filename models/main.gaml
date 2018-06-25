@@ -37,7 +37,7 @@ global
 	float burning_probability <- 0.6; //probabilty that a plot will spread fire to one of its neighboring plot
 	float wind <- 0.2;
 	float drought <- 0.3;
-	float hurting_distance <- 5.0 # m;
+	float hurting_distance <- 10.0 # m;
 	float field_of_view <- 15.0 # m;
 	float smoke_view <- 50.0 # m;
 	int nb_fire <- 0;
@@ -52,14 +52,17 @@ global
 	int nb_exit <- 0;
 	int nb_fire_station <- 2;
 	int nb_police_station <- 1;
+	bool simple_buildings <- false;
 	
 	//People and emergency services
 	int nb_firefighters <- 5;
 	int nb_policemen <- 2;
 	
-	int nb_residents_w_answered_1st_call <- 0;
-	int evacuation_reminder_cycle <- 300;
+	int alert_msg_sent <- 0 update: alert_msg_sent;
+	int nb_residents_w_answered_1st_call <- 0 update: nb_residents_w_answered_1st_call;
+	int evacuation_reminder_cycle <- 60; //one reminder per hour
 	
+	bool tactical_fireman <- false;
 	
 	//Residents distribution (we use a total of 100 people, for the simulation is slow above this number)
 	int nb_residents <- 0;
@@ -87,7 +90,18 @@ global
 	bool use_cognitive_biases <- true;
 	int cognitive_biases_influence_occurence <- 0;
 	int nb_cb_influences <- 0;
+	int nb_of_warning_msg_cb <- 0; //total warning message for people with cb
 	int nb_ignored_msg_while_cb <- 0;
+	float cognitive_biases_distribution <- 0.2;
+	
+	int smoke_perceive_total <- 0;
+	int fire_perceive_total <- 0;
+	
+	int nb_of_smoke_signals_ignored_cb <- 0;
+	int nb_of_fire_signals_ignored_cb <- 0;
+	
+//	string monitor_cb_messages <- ""+nb_ignored_msg_while_cb + " / " + nb_of_warning_msg_cb update:  ""+nb_ignored_msg_while_cb + " / " + nb_of_warning_msg_cb;
+	
 	int nb_neglect_of_probability <- 0;
 	int nb_semmelweis_reflex <- 0;
 	int nb_illusory_truth_effect <- 0;
@@ -121,6 +135,44 @@ global
 	graph road_network;
 	graph road_network_practicable;
 	
+	//Mouse commands (right click on the map)
+	// Warning : do not use after 3d rotation or the coordinates will be messed up
+	user_command "Create a Fire here" { create fire number: 1 with: [choosed_location::# user_location]; }
+	user_command "Create Fire Watch Tower here" { create firewatch number: 1 with: [location::# user_location]; }
+	user_command "Create a City Exit here" { create city_exit number: 1 with: [location::# user_location]; }
+	
+	// Monitoring
+	
+	string monitor_ignored_msg_cb <- "0/0"  update: ""+nb_ignored_msg_while_cb + " / " + nb_of_warning_msg_cb;
+	string monitor_ignored_smoke_perceive_cb <- "0/0"  update: ""+nb_of_smoke_signals_ignored_cb + " / " + smoke_perceive_total;
+	string monitor_ignored_fire_perceive_cb <- "0/0"  update: ""+nb_of_fire_signals_ignored_cb + " / " + fire_perceive_total;
+	
+	int residents_total <- 0 update: length(every_resident);
+	int residents_alive <- 0 update: length(every_resident_alive);
+	int residents_dead <- 0 update: length(every_resident) - length(every_resident_alive);
+	int residents_alert <- 0 update: length(every_resident_alive where each.on_alert);
+	int residents_bunker <- 0 update: length(every_resident_alive where each.in_safe_place);
+	int residents_influenced_by_cognitive_biases <- 0 update: length(every_resident where each.cognitive_biases_influence);
+	float buildings_damage <-0.0 update:  (building sum_of (each.damage )  / length( building ) ) /255;
+	
+	int residents_dead_with_cb <- 0 update: length(every_resident where (each.cognitive_biases_influence and !each.alive) );
+	
+	string cdd_alive <- "0 / "+nb_can_do_defenders update: ""+length(can_do_defenders_alive)+ " / "+nb_can_do_defenders;
+	string cd_alive <- "0 / "+nb_considered_defenders update: ""+length(considered_defenders_alive)+ " / "+nb_considered_defenders;
+	string iv_alive <- "0 / "+nb_isolated_and_vulnerable update: ""+length(isolated_and_vulnerable_alive)+ " / "+nb_isolated_and_vulnerable;
+	string ld_alive <- "0 / "+nb_livelihood_defenders update: ""+length(livelihood_defenders_alive)+ " / "+nb_livelihood_defenders;
+	string ta_alive <- "0 / "+nb_threat_avoiders update: ""+length(threat_avoiders_alive)+ " / "+nb_threat_avoiders;
+	string tm_alive <- "0 / "+nb_threat_monitors update: ""+length(threat_monitors_alive)+ " / "+nb_threat_monitors;
+	string ur_alive <- "0 / "+nb_unaware_reactors update: ""+length(unaware_reactors_alive)+ " / "+nb_unaware_reactors;
+
+//    int cdd_alive <- 0 update: length(can_do_defenders);
+//    int cd_alive <- 0 update: length(considered_defenders);
+//    int iv_alive <- 0 update: length(isolated_and_vulnerable);
+//    int ld_alive <- 0 update: length(livelihood_defenders);
+//    int ta_alive <- 0 update: length(threat_avoiders);
+//    int tm_alive <- 0 update: length(threat_monitors);
+//    int ur_alive <- 0 update: length(unaware_reactors);
+	
 	init
 	{
 		//Buildings
@@ -148,9 +200,12 @@ global
 		loop i over: police_stations { i.police_station <- true; }
 
 		//Fires
-		create fire number: 1 with: [choosed_location::{ 170, 210 }];
-		create fire number: 1 with: [choosed_location::{ 750, 300 }];
+//		create fire number: 1 with: [choosed_location::{ 170, 210 }];
+//		create fire number: 1 with: [choosed_location::{ 750, 300 }];
+		
 		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
+		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
+		create fire number: 1 with: [choosed_location::{ 595, 750 }]; // in the middle of the city
 
 		// Random fires
 		create fire number: nb_fire;
@@ -161,40 +216,118 @@ global
 		
 	}
 
-	reflex fin_simulation when: do_pause or fire_size = 0
+	//stop experiment if : pause is triggered or when no more residents are active
+	reflex fin_simulation when: do_pause or (residents_dead + residents_bunker = residents_total)
 	{
 		do_pause <- false;
 		do pause;
+		do save;
 	}
-
-	//Mouse commands
-	// Warning : do not use after 3d rotation or the coordinates will be messed up
-
-	// Create fire  (Right click on map then  "Apply Create Fire starter here")
-	user_command "Create a Fire here" { create fire number: 1 with: [choosed_location::# user_location]; }
-
-	// Create firewatch tower  (Right click on map then ->  "Apply Create Fire watch here")
-	user_command "Create Fire Watch Tower here" { create firewatch number: 1 with: [location::# user_location]; }
-
-	// Create city exit
-	user_command "Create a City Exit here" { create city_exit number: 1 with: [location::# user_location]; }
-
-	// Monitoring
-	int residents_alive <- 0 update: length(every_resident_alive);
-	int residents_dead <- 0 update: length(every_resident) - length(every_resident_alive);
-	int residents_alert <- 0 update: length(every_resident_alive where each.on_alert);
-	int residents_bunker <- 0 update: length(every_resident_alive where each.in_safe_place);
-	int residents_influenced_by_cognitive_biases <- 0 update: length(every_resident where each.cognitive_biases_influence);
-	float buildings_damage <-0.0 update:  (building sum_of (each.damage )  / length( building ) ) /255;
 	
-	int cdd_alive <- 0 update: length(can_do_defenders);
-	int cd_alive <- 0 update: length(considered_defenders);
-	int iv_alive <- 0 update: length(isolated_and_vulnerable);
-	int ld_alive <- 0 update: length(livelihood_defenders);
-	int ta_alive <- 0 update: length(threat_avoiders);
-	int tm_alive <- 0 update: length(threat_monitors);
-	int ur_alive <- 0 update: length(unaware_reactors);
+	// Save data into CSV files
+	action save
+	{
+		if (!result_saved)
+		{
+			// Percentages
+			
+			int nb_res <- length(every_resident);
+			int nb_res_alerted <- length(every_resident where each.on_alert);
+			int nb_dead_res <- length(every_resident where !each.alive);
+			
+			float percentage_dead_res <- nb_dead_res * 100 / nb_res;
+			float percentage_res_alive <- 100 - percentage_dead_res;
+			float percentage_res_answered_1st_call <- 100 - percentage_dead_res;
+			float percentage_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call * 100 / nb_res;
+			//float percentage_alerted <- nb_res_alerted * 100 / nb_res ;
+			float percentage_in_safe_place <- length(every_resident where each.in_safe_place) * 100 / nb_res;
+			
+//		monitor "Current_time" value: current_time;
+//		monitor "Fire Size" value: fire_size;
+//		
+//		monitor "Alive" value: residents_alive;
+//		monitor "Dead" value: residents_dead;
+//		monitor "Dead with CB" value: residents_dead_with_cb;
+//		monitor "Alerted" value: residents_alert;
+//		monitor "Safe" value: residents_bunker;
+//		
+//		monitor "Can Do defenders" value: cdd_alive;
+//        monitor "Considered Defenders" value: cd_alive;
+//        monitor "Isolated and vulnerable" value: iv_alive;
+//        monitor "Livelihood Defenders" value: ld_alive;
+//        monitor "Threat Avoiders" value: ta_alive;
+//        monitor "Threat Monitors" value: tm_alive;
+//        monitor "Unaware Reactors" value: ur_alive;
+//		
+//		monitor "With Cognitive Biases" value: residents_influenced_by_cognitive_biases;
+//		monitor "Cognitive Biases influence" value: nb_cb_influences;
+//		monitor "Warning ignored because Cognitive Biases" value: monitor_ignored_msg_cb;
+//		
+//		monitor "With Neglect of probablity" value: nb_neglect_of_probability;
+//		monitor "With Semmelweis reflex" value: nb_semmelweis_reflex;
+//		monitor "With Illusory of truth" value: nb_illusory_truth_effect;
+			
+			
+//	string monitor_ignored_msg_cb <- "0/0"  update: ""+nb_ignored_msg_while_cb + " / " + nb_of_warning_msg_cb;
+//	
+//	int residents_total <- 0 update: length(every_resident);
+//	int residents_alive <- 0 update: length(every_resident_alive);
+//	int residents_dead <- 0 update: length(every_resident) - length(every_resident_alive);
+//	int residents_alert <- 0 update: length(every_resident_alive where each.on_alert);
+//	int residents_bunker <- 0 update: length(every_resident_alive where each.in_safe_place);
+//	int residents_influenced_by_cognitive_biases <- 0 update: length(every_resident where each.cognitive_biases_influence);
+//	float buildings_damage <-0.0 update:  (building sum_of (each.damage )  / length( building ) ) /255;
+//	
+//	int residents_dead_with_cb <- 0 update: residents_influenced_by_cognitive_biases - length(every_resident where (each.cognitive_biases_influence and !each.alive) ) ;
+//	
+//	string cdd_alive <- "0 / "+nb_can_do_defenders update: ""+length(can_do_defenders_alive)+ " / "+nb_can_do_defenders;
+//	string cd_alive <- "0 / "+nb_considered_defenders update: ""+length(considered_defenders_alive)+ " / "+nb_considered_defenders;
+//	string iv_alive <- "0 / "+nb_isolated_and_vulnerable update: ""+length(isolated_and_vulnerable_alive)+ " / "+nb_isolated_and_vulnerable;
+//	string ld_alive <- "0 / "+nb_livelihood_defenders update: ""+length(livelihood_defenders_alive)+ " / "+nb_livelihood_defenders;
+//	string ta_alive <- "0 / "+nb_threat_avoiders update: ""+length(threat_avoiders_alive)+ " / "+nb_threat_avoiders;
+//	string tm_alive <- "0 / "+nb_threat_monitors update: ""+length(threat_monitors_alive)+ " / "+nb_threat_monitors;
+//	string ur_alive <- "0 / "+nb_unaware_reactors update: ""+length(unaware_reactors_alive)+ " / "+nb_unaware_reactors;
+			
+	
+			// If file does not exist yet, we write the column names
+			if (!file_exists("../results/exported_results.csv"))
+			{
+				save ["Simulation", "Safe (%)", "Victims (%)", "Reacted (%)"] to: "../results/exported_results.csv" type: "csv" rewrite: false;
+			}
+	
+			// Ajouts des résultats de la simulation dans le fichier csv
+			save [simulation_name, personalized_msg, trained_population, tactical_firefighters, percentage_res_alive, percentage_dead_res, percentage_residents_w_answered_1st_call,
+			//				percentage_alerted,
+			percentage_in_safe_place,buildings_damage] header: true to: "../results/exported_results.csv" type: "csv" rewrite: false;
+	
+			// Si le fichier n'existe pas, on écrit son header
+			if (!file_exists("../results/exported_results_personnalities_victims.csv"))
+			{
+				save
+				["Simulation", "can_do_defenders (" + nb_can_do_defenders * 100 / nb_res + "%)", "considered_defenders (" + nb_considered_defenders * 100 / nb_res + "%)", "isolated_and_vulnerable (" + nb_isolated_and_vulnerable * 100 / nb_res + "%)", "livelihood_defenders (" + nb_livelihood_defenders * 100 / nb_res + "%)", "threat_avoiders (" + nb_threat_avoiders * 100 / nb_res + "%)", "threat_monitors (" + nb_threat_monitors * 100 / nb_res + "%)", "unaware_reactors (" + nb_unaware_reactors * 100 / nb_res + "%)"]
+				header: true to: "../results/exported_results_personnalities_victims.csv" type: "csv" rewrite: false;
+			}
+	
+			// Calcul des pourcentages
+			float percentage_dead_can_do_defenders <- length(can_do_defenders where !each.alive) * 100 / nb_can_do_defenders;
+			float percentage_dead_considered_defenders <- length(considered_defenders where !each.alive) * 100 / nb_considered_defenders;
+			float percentage_dead_isolated_and_vulnerable <- length(isolated_and_vulnerable where !each.alive) * 100 / nb_isolated_and_vulnerable;
+			float percentage_dead_livelihood_defenders <- length(livelihood_defenders where !each.alive) * 100 / nb_livelihood_defenders;
+			float percentage_dead_threat_avoiders <- length(threat_avoiders where !each.alive) * 100 / nb_threat_avoiders;
+			float percentage_dead_threat_monitors <- length(threat_monitors where !each.alive) * 100 / nb_threat_monitors;
+			float percentage_dead_unaware_reactors <- length(unaware_reactors where !each.alive) * 100 / nb_unaware_reactors;
+			// Ajouts des résultats de la simulation dans le fichier csv
+			save
+			[simulation_name, percentage_dead_can_do_defenders, percentage_dead_considered_defenders, percentage_dead_isolated_and_vulnerable, percentage_dead_livelihood_defenders, percentage_dead_threat_avoiders, percentage_dead_threat_monitors, percentage_dead_unaware_reactors]
+			header: true to: "../results/exported_results_personnalities_victims.csv" type: "csv" rewrite: false;
+		}
+	
+		result_saved <- true;
+	}
+	
 }
+
+	
 
 
 experiment Main type:gui 
@@ -203,21 +336,25 @@ experiment Main type:gui
 	action createFire { create fire; }
 	user_command Create_Fire action: createFire;
 	
-	parameter "Cognitive Biases" var: use_cognitive_biases init: use_cognitive_biases category: "Cognitive Biases (hit reload after changing this value)";
+	parameter "Cognitive Biases" var: use_cognitive_biases init: use_cognitive_biases category: "Cognitive Biases (hit reload after changing these values)";
+	parameter "Cognitive Biases Distribution" var: cognitive_biases_distribution init: cognitive_biases_distribution category: "Cognitive Biases (hit reload after changing these values)" max: 1.0;
 	
 	parameter "Firefighters Messages" var: show_firefighters_messages init: true category: "Messages";
 	parameter "Police Messages" var: show_police_messages init: true category: "Messages";
 	parameter "Residents Messages" var: show_residents_messages init: true category: "Messages";
-	parameter "BDI Information" var: show_residents_BDI init: true category: "Messages";
+	parameter "BDI Information" var: show_residents_BDI init: false category: "Messages";
 	parameter "Cognitive Biases Messages" var: show_cognitive_biases_messages init: true category: "Messages";
 	
+	parameter "Simple buildings" var: simple_buildings category: "Global" init: true;
+	parameter "Tactical fireman" var: tactical_fireman category: "Global";
 	parameter "Start hour" var: starting_hour category: "Global" min: 0;
 	parameter "Wind" var: wind category: "Global" min: 0.0;
 	parameter "Drought" var: drought category: "Global" min: 0.0;
 	parameter "Field of View" var: field_of_view category: "Global" min: 10.0;
 	parameter "Hurting distance" var: hurting_distance category: "Global" min: 1.0;
+	parameter "Uncontrollable fire size" var: fire_uncontrollable init: 600 category: "Global";
 	parameter "Evacuation Reminder (in cycles)" var: evacuation_reminder_cycle category: "Global";
-	parameter "Burning speed (in cycles)" var: burning_speed category: "Global" min: 10;
+	parameter "Burning speed (in cycles)" var: burning_speed category: "Global" min: 2;
 	
 	parameter "Nb firefighters" var: nb_firefighters category: "Emergency Services" min: 0;
 	parameter "Nb Policeman" var: nb_policemen category: "Emergency Services" min: 0;
@@ -237,13 +374,13 @@ experiment Main type:gui
 		
 		// People
 		create resident number: nb_residents; //should be 0 if personnalities are used
-		create isolated_and_vulnerable number: nb_isolated_and_vulnerable;
-		create unaware_reactors number: nb_unaware_reactors;
-		create threat_avoiders number: nb_threat_avoiders;
-		create threat_monitors number: nb_threat_monitors;
 		create can_do_defenders number: nb_can_do_defenders;
 		create considered_defenders number: nb_considered_defenders;
+		create isolated_and_vulnerable number: nb_isolated_and_vulnerable;
 		create livelihood_defenders number: nb_livelihood_defenders;
+		create threat_avoiders number: nb_threat_avoiders;
+		create threat_monitors number: nb_threat_monitors;
+		create unaware_reactors number: nb_unaware_reactors;
 	}
 
 	output
@@ -254,22 +391,33 @@ experiment Main type:gui
 		
 		monitor "Alive" value: residents_alive;
 		monitor "Dead" value: residents_dead;
+		monitor "Dead with CB" value: residents_dead_with_cb;
 		monitor "Alerted" value: residents_alert;
+		monitor "Reacted on first warning" value: nb_residents_w_answered_1st_call;
 		monitor "Safe" value: residents_bunker;
 		
 		monitor "Can Do defenders" value: cdd_alive;
-		monitor "Considered Defenders" value: cd_alive;
-		monitor "Isolated and vulnerable" value: iv_alive;
-		monitor "Livelihood Defenders" value: ld_alive;
-		monitor "Threat Avoiders" value: ta_alive;
-		monitor "Threat monitors" value: tm_alive;
-		monitor "Unaware reactors" value: ur_alive;
+        monitor "Considered Defenders" value: cd_alive;
+        monitor "Isolated and vulnerable" value: iv_alive;
+        monitor "Livelihood Defenders" value: ld_alive;
+        monitor "Threat Avoiders" value: ta_alive;
+        monitor "Threat Monitors" value: tm_alive;
+        monitor "Unaware Reactors" value: ur_alive;
 		
 		monitor "With Cognitive Biases" value: residents_influenced_by_cognitive_biases;
 		monitor "Cognitive Biases influence" value: nb_cb_influences;
-		monitor "Warning ignored because Cognitive Biases" value: nb_ignored_msg_while_cb;
+		monitor "Global warning messages" value: alert_msg_sent;
+		monitor "Warning ignored because Cognitive Biases" value: monitor_ignored_msg_cb;
 		
-		monitor "Buildings damage" value: buildings_damage color: #grey;
+		monitor "Smoke perceived ignored" value: monitor_ignored_smoke_perceive_cb;
+		monitor "Fire perceived ignored" value: monitor_ignored_fire_perceive_cb;
+		
+		monitor "With Neglect of probablity" value: nb_neglect_of_probability;
+		monitor "With Semmelweis reflex" value: nb_semmelweis_reflex;
+		monitor "With Illusory of truth" value: nb_illusory_truth_effect;
+	
+//		monitor "Buildings damage" value: buildings_damage color: #grey;
+
 
 		// Graphs
 		display Global
@@ -278,17 +426,41 @@ experiment Main type:gui
 			{
 				data "Fire Size" value: fire_size / 50 color: # orange;
 				data "Cognitive Biases influence" value: cognitive_biases_influence_occurence color: # blue;
-				data "Dead people" value: length(every_resident where !each.alive) color: # red;
-				data "People in alerte" value: length(every_resident where each.on_alert) color: # yellow;
-				data "People in safe place" value: length(every_resident where each.in_safe_place) color: # green;
-				data "Buildings damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
+				data "Dead" value: length(every_resident where !each.alive) color: # red;
+				data "Alerted" value: length(every_resident where each.on_alert) color: # yellow;
+				data "Safe" value: length(every_resident where each.in_safe_place) color: # green;
+//				data "Damage" value: (building sum_of (each.damage)) / length(building) color: # darkgrey;
+			}
+			
+			// Survivors by profiles
+			chart "Survivors by profiles" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+			{
+				data "can_do_defenders" value: length(can_do_defenders where each.alive) color: # green;
+				data "considered_defenders" value: length(considered_defenders where each.alive) color: # darkgreen;
+				data "livelihood_defenders" value: length(livelihood_defenders where each.alive) color: # lightgreen;
+				data "threat_monitors" value: length(threat_monitors where each.alive) color: # purple;
+				data "threat_avoiders" value: length(threat_avoiders where each.alive) color: # violet;
+				data "unaware_reactors" value: length(unaware_reactors where each.alive) color: # cyan;
+				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where each.alive) color: # blue;
+			}
+			
+			// Dead  by profiles
+			chart "Dead by profiles" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+			{
+				data "can_do_defenders" value: length(can_do_defenders where !each.alive) color: # green;
+				data "considered_defenders" value: length(considered_defenders where !each.alive) color: # darkgreen;
+				data "livelihood_defenders" value: length(livelihood_defenders where !each.alive) color: # lightgreen;
+				data "threat_monitors" value: length(threat_monitors where !each.alive) color: # purple;
+				data "threat_avoiders" value: length(threat_avoiders where !each.alive) color: # violet;
+				data "unaware_reactors" value: length(unaware_reactors where !each.alive) color: # cyan;
+				data "isolated_and_vulnerable" value: length(isolated_and_vulnerable where !each.alive) color: # blue;
 			}
 		}
 
 		// 3D Map
 		display map type: opengl
 		{
-			light 1 color: (is_night ? 50 : 230); // day / night
+			light id:1 type:direction direction:{1,1,1} color: (is_night ? 50 : 230); // day / night - does not seem to be working
 			
 			species building aspect: base;
 			species road aspect: base;
@@ -312,7 +484,6 @@ experiment Main type:gui
             species threat_avoiders aspect: sphere3D;
             species threat_monitors aspect: sphere3D;
             species unaware_reactors aspect: sphere3D;
-			
 		}
 	}
 }

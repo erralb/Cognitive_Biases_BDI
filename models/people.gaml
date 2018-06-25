@@ -44,7 +44,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	float default_probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
 	float probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
-	int nb_of_warning_msg <- 0;
+	int nb_of_warning_msg <- 0; //total warning messages
 	int nb_of_ignored_warning_msg <- 0;
 	
 	//Definition of the variables featured in the BDI architecture. 
@@ -109,7 +109,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	action status (string msg)
 	{
-		write string(self) + " ("+energy+") : " + msg;
+		write ""+cycle+" "+string(self) + " ("+energy+") : " + msg;
 		 
 		if(show_residents_BDI)
 		{
@@ -130,7 +130,7 @@ species people skills: [moving, fipa] control: simple_bdi
 		else { return false; }
 	}
 	
-	//for now unused, but should be used if all roads become unusable
+	//for now unused, but should be used when roads are unusable
 	action walk (agent a)
 	{
 		speed <- rnd(5.0, 10.0) # km / # h; //We assume they are at least going at average walking speed
@@ -251,50 +251,6 @@ species people skills: [moving, fipa] control: simple_bdi
 		return target_point;
 	}
 
-
-
-	// TODO replaced with simple_bdi "perceives"
-	// Left for emergency services compatibility
-	// @returns  : boolean
-	action check_if_danger_is_near
-	{
-		list<bool> directions <- get_closest_fire_at_hurting_distance();
-		// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
-		return directions;
-	}
-
-
-	// TODO replaced with simple_bdi "plan" -> escape
-	// @params : fire info (from get_closest_fire_at_hurting_distance)
-	action react_to_danger (list<bool> directions)
-	{
-		//  if directions[0] is true then there is a danger
-		// if my risk_awareness isn't null => I change direction
-		if (directions[0] and risk_awareness > 0)
-		{
-			if(show_people_messages) { 
-				do status("I perceived a danger at North ? => " + directions[1] + " : West ? =>" + directions[2]);
-			}
-
-			// Default, I go opposite from the fire
-			bool include_bunker <- false;
-			bool find_the_nearest <- false;
-
-			// But if my knowledge is high, then I know where are the nearest city exits and the bunker locations
-			if (knowledge >= 3)
-			{
-				include_bunker <- true;
-				find_the_nearest <- true;
-			}
-
-			// Search for my target
-			city_exit plan_b <- get_city_exit_opposed_to_fire(directions, find_the_nearest, include_bunker);
-			escape_target <- plan_b != nil ? plan_b : escape_target;
-			if(show_people_messages) { do status("I'm trying to escape through " + escape_target); }
-		}
-
-	}
-
 	//Simulate watering terrain and cutting vegetation to avoid fire spreading
 	action increase_terrain_resistance (int increase_value)
 	{
@@ -325,61 +281,44 @@ species people skills: [moving, fipa] control: simple_bdi
 		if (at_work) { work.resistance <- work.resistance + int(increase_value / 2); }
 	}
 	
-	
-	// Save data into CSV files
-	action save_result
+	//Apply cognitive biases to probability to react
+	//returns true/false on reaction and true/false to tell if it was influenced by a cognitive bias
+	action cognitive_biases(string called_from)
 	{
-		if (!result_saved)
+		bool influence <- true;
+		bool react;
+		
+		if(neglect_of_probability_cb_influence)
 		{
-			// Percentages
-			int nb_res <- length(every_resident);
-			int nb_res_alerted <- length(every_resident where each.on_alert);
-			int nb_dead_res <- length(every_resident where !each.alive);
-			float percentage_dead_res <- nb_dead_res * 100 / nb_res;
-			float percentage_res_alive <- 100 - percentage_dead_res;
-			float percentage_res_answered_1st_call <- 100 - percentage_dead_res;
-			float percentage_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call * 100 / nb_res;
-			//float percentage_alerted <- nb_res_alerted * 100 / nb_res ;
-			float percentage_in_safe_place <- length(every_resident where each.in_safe_place) * 100 / nb_res;
-
-			// If file does not exist yet, we write the column names
-			if (!file_exists("../results/exported_results.csv"))
-			{
-				save ["Simulation", "Msg Personnalises", "Population entraînee", "Tactiques Pompiers/Fire Watch", "Rescapes (%)", "Victims (%)", "Reaction a l'ordre d'evacution (%)",
-				//					"Alerté",
-				"En lieux surs(%)", "Degat sur les batiments (%)"] to: "../results/exported_results.csv" type: "csv" rewrite: false;
-			}
-
-			// Ajouts des résultats de la simulation dans le fichier csv
-			save [simulation_name, personalized_msg, trained_population, tactical_firefighters, percentage_res_alive, percentage_dead_res, percentage_residents_w_answered_1st_call,
-			//				percentage_alerted,
-			percentage_in_safe_place,buildings_damage] header: true to: "../results/exported_results.csv" type: "csv" rewrite: false;
-
-			// Si le fichier n'existe pas, on écrit son header
-			if (!file_exists("../results/exported_results_personnalities_victims.csv"))
-			{
-				save
-				["Simulation", "can_do_defenders (" + nb_can_do_defenders * 100 / nb_res + "%)", "considered_defenders (" + nb_considered_defenders * 100 / nb_res + "%)", "isolated_and_vulnerable (" + nb_isolated_and_vulnerable * 100 / nb_res + "%)", "livelihood_defenders (" + nb_livelihood_defenders * 100 / nb_res + "%)", "threat_avoiders (" + nb_threat_avoiders * 100 / nb_res + "%)", "threat_monitors (" + nb_threat_monitors * 100 / nb_res + "%)", "unaware_reactors (" + nb_unaware_reactors * 100 / nb_res + "%)"]
-				header: true to: "../results/exported_results_personnalities_victims.csv" type: "csv" rewrite: false;
-			}
-
-			// Calcul des pourcentages
-			float percentage_dead_can_do_defenders <- length(can_do_defenders where !each.alive) * 100 / nb_can_do_defenders;
-			float percentage_dead_considered_defenders <- length(considered_defenders where !each.alive) * 100 / nb_considered_defenders;
-			float percentage_dead_isolated_and_vulnerable <- length(isolated_and_vulnerable where !each.alive) * 100 / nb_isolated_and_vulnerable;
-			float percentage_dead_livelihood_defenders <- length(livelihood_defenders where !each.alive) * 100 / nb_livelihood_defenders;
-			float percentage_dead_threat_avoiders <- length(threat_avoiders where !each.alive) * 100 / nb_threat_avoiders;
-			float percentage_dead_threat_monitors <- length(threat_monitors where !each.alive) * 100 / nb_threat_monitors;
-			float percentage_dead_unaware_reactors <- length(unaware_reactors where !each.alive) * 100 / nb_unaware_reactors;
-			// Ajouts des résultats de la simulation dans le fichier csv
-			save
-			[simulation_name, percentage_dead_can_do_defenders, percentage_dead_considered_defenders, percentage_dead_isolated_and_vulnerable, percentage_dead_livelihood_defenders, percentage_dead_threat_avoiders, percentage_dead_threat_monitors, percentage_dead_unaware_reactors]
-			header: true to: "../results/exported_results_personnalities_victims.csv" type: "csv" rewrite: false;
+			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") was influenced by neglect_of_probability in "+called_from); }
+			do neglect_of_probability(probability_to_react);
+			nb_cb_influences <- nb_cb_influences + 1;
+			influence <- true;
 		}
-
-		result_saved <- true;
+		
+		if(illusory_truth_effect_cb_influence)
+		{
+			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by illusory_truth_effect in "+called_from); }
+			do illusory_truth_effect(potential_danger_belief, probability_to_react);
+			nb_cb_influences <- nb_cb_influences + 1;
+			influence <- true;
+		}
+		
+		if(semmelweis_reflex_cb_influence)
+		{
+			react <- bool(semmelweis_reflex(probability_to_react));
+			if(!react) { 
+				if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by the semmelweis_reflex in "+called_from); }
+				nb_cb_influences <- nb_cb_influences + 1;
+				influence <- true;
+			}
+		}
+		
+		react <- flip(probability_to_react);
+// 		do status("("+probability_to_react+") - "+[react,influence]);
+		
+		return [react,influence];
 	}
-	
 	
 	//Cognitive Bias : Neglect of probability
 	//Will influence the agent's probability_to_react (decisions on going home or escaping)
@@ -391,17 +330,19 @@ species people skills: [moving, fipa] control: simple_bdi
 		
 		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
 		
-		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
+//		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
+		if( newBeliefProbability < 0.34 and risk_awareness < 3) //1 ignore what is unlikely to happen, even if it's happening
 		{
-			newBeliefProbability <- 0.0;
+			newBeliefProbability <- 0.1;
 		}
-		else if( newBeliefProbability  < 0.34 and (risk_awareness > 3 or knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
+//		else if( newBeliefProbability  < 0.34 and (risk_awareness > 3 or knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
+		else if( newBeliefProbability  < 0.34 and (knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
 		{
 			newBeliefProbability <- 0.9;
 		}
-		else if( newBeliefProbability  > 0.34 ) //3 under-estimate a high and medium probability of something happening
+		else if( newBeliefProbability  > 0.6 ) //3 under-estimate a high and medium probability of something happening
 		{
-			newBeliefProbability <- 0.2;
+			newBeliefProbability <- 0.3;
 		}
 		
 		probability_to_react <- newBeliefProbability;
@@ -442,7 +383,7 @@ species people skills: [moving, fipa] control: simple_bdi
 		else //reinforce belief strength
 		{
 			float illusoryProbability <- perceivedProbability * nb_of_warning_msg;
-			do remove_belief(beliefName);
+//			do remove_belief(beliefName);
 			do add_belief(beliefName, illusoryProbability);
 		}
 	}

@@ -37,6 +37,9 @@ species threat_avoiders parent: resident
 		//Default beliefs
 		do add_belief(no_danger_belief,0.5);
 	}
+	
+	//escape first
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 100.0 remove_desire: work_desire and home_desire and defend_desire;
 
 	// Relexe : Couleur
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : # purple; }

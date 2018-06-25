@@ -36,6 +36,8 @@ species unaware_reactors parent: resident
 		//Default beliefs
 		do add_belief(no_danger_belief,1.0);
 	}
+	
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 10.0 remove_desire: work_desire and home_desire and defend_desire;
 
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, energy); }
 }

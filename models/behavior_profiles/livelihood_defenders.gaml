@@ -38,6 +38,10 @@ species livelihood_defenders parent: resident
 		do add_belief(no_danger_belief,0.2);
 		do add_belief(can_defend_belief,1.0);
 	}
+	
+	//They'd rather die than escape...
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 10.0 remove_desire: work_desire and home_desire;
+	rule belief: can_defend_belief new_desire: defend_desire strength: 100.0;
 
 	reflex color { color <- on_alert ? rgb(energy, energy, 0) : rgb(0, energy, 0); }
 

@@ -39,4 +39,7 @@ species can_do_defenders parent: resident control: simple_bdi
 		do add_belief(no_danger_belief,0.3);
 		do add_belief(can_defend_belief,0.7);
 	}
+	
+	rule belief: immediate_danger_belief new_desire: escape_desire strength: 30.0 remove_desire: work_desire and home_desire;
+	rule belief: can_defend_belief new_desire: defend_desire strength: 80.0; //defense is the highest desire
 }

@@ -18,7 +18,7 @@ global
 	list<resident> people_to_warn <- nil update: every_resident_alive where (!each.evacuating and !each.on_alert and !each.warned and !each.is_escorted and !each.in_safe_place);
 }
 
-species firefighters parent: people
+species firefighters parent: people control: simple_bdi
 {
 	float fighting_distance <- 10 # m;
 	bool injured <- false;
@@ -38,7 +38,7 @@ species firefighters parent: people
 	init
 	{
 		speed <- rnd(20.0, 25.0) # km / # h;
-		energy <- rnd(20000, 25500); // supermen :-)
+		energy <- float(rnd(20000, 25500)); // supermen :-)
 		color <- # red;
 		at_home <- true;
 		work <- one_of(building where (each.fire_station)); //They're at a firestation by default
@@ -59,12 +59,7 @@ species firefighters parent: people
 
 	reflex color { color <- rgb(energy / 100, 0, 0); } //color is changing when injured
 
-//	plan recover intention: recover_desire priority 5
-//	when:
-//	finished_when:
-//	{
-//		
-//	}
+
 
 	// If hurt (energy below 1000) then it will go back to the station to get healed
 	reflex health when: alive and !injured and energy < 1000
@@ -91,8 +86,7 @@ species firefighters parent: people
 	{
 		if (first(firefighters where each.alive) = self)
 		{
-			do save_result; //save results
-			do_pause <- true; //stop experiment
+//			do_pause <- true; //stop experiment
 			
 			do send_msg(list(policemen where each.alive), every_resident_alive, "Fires extinguished"); //End fire alert
 			
@@ -187,11 +181,14 @@ species firefighters parent: people
 	//When injured, go back to the station to recover
 	reflex evacuate_to_rest when: alive and injured and !at_work
 	{
-		if(show_firefighters_messages) { do status("I'm injured and going back to the station to get healed"); }
+		
 
 		target <- any_location_in(work);
 		do goto target: target on: road_network;
-		if (location = target) { at_work <- true; }
+		if (location = target) { 
+			at_work <- true;
+			if(show_firefighters_messages) { do status("I'm injured and went back to the station to recover"); }
+		}
 	}
 
 	// Recover
@@ -237,7 +234,7 @@ species policemen parent: people
 	{
 //		speed <- rnd(20.0, 25.0) # km / # h;
 		speed <- 50 # km / # h;
-		energy <- rnd(2000, 2550);
+		energy <- float(rnd(2000, 2550));
 		
 		color <- # blue;
 		home <- one_of(building where (!each.bunker and !each.fire_station and !each.police_station));
@@ -283,7 +280,7 @@ species policemen parent: people
 			if (first(policemen where each.alive) = self) //pick a policeman and make him send the alert
 			{
 				if(show_police_messages) { do status("Police is asking for general evacuation"); }
-				do send_msg(every_resident_alive, nil, 'Alert for Residents : Go to shelter');
+				do send_msg(every_resident_alive, nil, 'Alert for Residents : Go into shelter');
 			}
 		}
 	}
@@ -293,8 +290,9 @@ species policemen parent: people
 	{
 		if (first(policemen where each.alive) = self)
 		{
+			alert_msg_sent <- alert_msg_sent +1;
 			if(show_police_messages) { do status("Evacuation reminder"); }
-			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, 'Alert for Residents : Go to shelter');
+			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, 'Alert for Residents : Go into shelter');
 		}
 	}
 
@@ -310,12 +308,12 @@ species policemen parent: people
 				if(show_police_messages) { do status("I'm going to help " + resident_to_help); }
 				remove resident_to_help from: residents_who_have_asked_help;
 			} 
-			else if (length(people_to_warn) > 0) //this is dodgy, because they cannot know who hasn't been warned. It should just be a door to door thing to check on people or driving around "making noise" to give the alert
-			{
-				resident_to_help <- people_to_warn closest_to self;
-				remove resident_to_help from: people_to_warn;
-				if(show_police_messages) { do status(" : I'm going to help " + resident_to_help); }
-			}
+//			else if (length(people_to_warn) > 0) //this is dodgy, because they cannot know who hasn't been warned. It should just be a door to door thing to check on people or driving around "making noise" to give the alert
+//			{
+//				resident_to_help <- people_to_warn closest_to self;
+//				remove resident_to_help from: people_to_warn;
+//				if(show_police_messages) { do status(" : I'm going to help " + resident_to_help); }
+//			}
 		}
 
 		if (resident_to_help != nil)
@@ -408,6 +406,47 @@ species policemen parent: people
 
 		//every two cycles, check if I'm taking a safe escape route (regarding my knowledge)
 		if (cycle mod 2 = 0) { do react_to_danger(check_if_danger_is_near()); }
+
+	}
+	
+	// TODO replaced with simple_bdi "perceives"
+	// Left for emergency services compatibility
+	// @returns  : boolean
+	action check_if_danger_is_near
+	{
+		list<bool> directions <- get_closest_fire_at_hurting_distance();
+		// Si un danger existe ( bool danger <- directions[0] ) et que ma conscience des risques n'est pas nulle => je change de direction
+		return directions;
+	}
+		
+	// TODO replaced with simple_bdi "plan" -> escape
+	// @params : fire info (from get_closest_fire_at_hurting_distance)
+	action react_to_danger (list<bool> directions)
+	{
+		//  if directions[0] is true then there is a danger
+		// if my risk_awareness isn't null => I change direction
+		if (directions[0] and risk_awareness > 0)
+		{
+			if(show_people_messages) { 
+				do status("I perceived a danger at North ? => " + directions[1] + " : West ? =>" + directions[2]);
+			}
+
+			// Default, I go opposite from the fire
+			bool include_bunker <- false;
+			bool find_the_nearest <- false;
+
+			// But if my knowledge is high, then I know where are the nearest city exits and the bunker locations
+			if (knowledge >= 3)
+			{
+				include_bunker <- true;
+				find_the_nearest <- true;
+			}
+
+			// Search for my target
+			city_exit plan_b <- get_city_exit_opposed_to_fire(directions, find_the_nearest, include_bunker);
+			escape_target <- plan_b != nil ? plan_b : escape_target;
+			if(show_people_messages) { do status("I'm trying to escape through " + escape_target); }
+		}
 
 	}
 }
