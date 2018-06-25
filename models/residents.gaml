@@ -62,38 +62,36 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		if(use_cognitive_biases)
 		{
 			//Randomly distribute Cognitive Biases at a cognitive_biases_distribution% chance
-			// But give only one bias
-			
 			bool cb_flip <- flip(cognitive_biases_distribution);
-			int cb <- rnd(1,3);
 			
-			if(cb = 1)
-			{ 
-				neglect_of_probability_cb_influence <- true; 
-				cognitive_biases_influence <- true; 
-				nb_neglect_of_probability <- nb_neglect_of_probability + 1;
-			}
-			if(cb = 2)
-			{ 
-				semmelweis_reflex_cb_influence <- true; 
-				cognitive_biases_influence <- true;
-				nb_semmelweis_reflex <- nb_semmelweis_reflex + 1;
-			}
-			if(cb = 3)
+			if(cb_flip)
 			{
-				illusory_truth_effect_cb_influence <- true; 
-				cognitive_biases_influence <- true;
-				nb_illusory_truth_effect <- nb_illusory_truth_effect + 1;
+				cognitive_biases_influence <- true; 
+					
+				// But give only one bias per resident
+				int cb <- rnd(1,3);
+				if(cb = 1)
+				{ 
+					neglect_of_probability_cb_influence <- true; 
+					nb_neglect_of_probability <- nb_neglect_of_probability + 1;
+				}
+				if(cb = 2)
+				{ 
+					semmelweis_reflex_cb_influence <- true; 
+					nb_semmelweis_reflex <- nb_semmelweis_reflex + 1;
+				}
+				if(cb = 3)
+				{
+					illusory_truth_effect_cb_influence <- true; 
+					nb_illusory_truth_effect <- nb_illusory_truth_effect + 1;
+				}
 			}
 		}
-		
 	}
-
-	//Relexe : Couleur
-	reflex color { color <- on_alert ? rgb(int(energy), int(energy), 0) : rgb(0, int(energy), 0); }
 	
 	
-	//Resident receives a message
+	//Resident receives a message (for now only from the police)
+	//TODO send receive messages between residents (family?)
 	reflex receive_message when: !(empty(proposes))
 	{
 		nb_of_warning_msg <- nb_of_warning_msg + 1;
@@ -108,15 +106,14 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		}
 		
 		bool react <- flip(probability_to_react);
-		
 		bool ignored_because_of_cb <-false;
 		
 		if(cognitive_biases_influence) {
 			nb_of_warning_msg_cb <- nb_of_warning_msg_cb + 1; //count messages sent to residents that are under cb influence
-			list<bool> cb_results <- cognitive_biases("receive_message reflex"); //Apply cignitive biases
- 			do status("("+probability_to_react+") - "+cb_results);
-			bool react <- cb_results[0];
-			bool ignored_because_of_cb <- cb_results[1];
+			list<bool> cb_results <- cognitive_biases("receive_message reflex"); //Apply cognitive biases
+// 			do status("("+probability_to_react+") - "+cb_results);
+			react <- cb_results[0];
+			ignored_because_of_cb <- cb_results[1];
 		}
 		
 		if (react and "Alert for Residents : Go into shelter" in msg)
@@ -124,35 +121,39 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			if(show_residents_messages) { do status("I'm going to defend my house"); }
 			on_alert <- true;
 			warned <- true;
+			do color; //change color
 			
 			do accept_proposal(message: info, contents: ['OK!']);
 			
 			speed <- speed + motivation; // Motivation increases speed
 			
-//			do add_belief(potential_danger_belief);
+			//do add_belief(potential_danger_belief);
 			do add_belief(immediate_danger_belief);
 			
 			if(nb_of_warning_msg = 1) { nb_residents_w_answered_1st_call <- nb_residents_w_answered_1st_call + 1; } //count people who reacted on first call
 		}
 		else
 		{
-			nb_ignored_msg_while_cb <- nb_ignored_msg_while_cb +1;
-//			if(ignored_because_of_cb) { nb_ignored_msg_while_cb <- nb_ignored_msg_while_cb +1; }
+			nb_ignored_msg_while_cb <- nb_ignored_msg_while_cb +1; //if(ignored_because_of_cb) { nb_ignored_msg_while_cb <- nb_ignored_msg_while_cb +1; }
 			if(show_residents_messages) { do status("I ignore the warning"); }
 			do reject_proposal(message: info, contents: ["I ignore the warning"]);
 		}
 
 		// If the fires are extinguished, back to normal
-		if (info.contents[0] = "Fires extinguished")
+		if (react and "Fires extinguished" in msg)
 		{
-			//TODO this should also be influenced by Cognitive Biases
-			//Like reject the fact that the dange is over and keep escaping or defending when it's not useful anymore
 			do accept_proposal(message: info, contents: ['OK!']);
 			do back_to_normal_state;
 		}
+		else if(last_cycle_update != cycle)
+		{
+			last_cycle_update <- cycle;
+			kept_defense_late <- kept_defense_late +1;
+//			do reject_proposal(message: info, contents: ["I ignore the end of the alert and keep defending"]);
+		}
 	}
 	
-	//If the agent perceives a smoke it should give the alert and stay alert, if his awareness is high enough
+	//Smoke perception : he should give the alert and stay alert, if his awareness is high enough
 	perceive target: plot in: smoke_view 
 	when: alive and ! in_safe_place and ! has_belief(potential_danger_belief)  {
 		if(burning)
@@ -160,7 +161,6 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			smoke_perceive_total <- smoke_perceive_total +1;
 			ask myself {
 
-//				bool react <- flip(probability_to_react);
 				bool react <- true;
 				bool ignored_because_of_cb <- false;
 				
@@ -169,38 +169,42 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 					react <- cb_results[0];
 					ignored_because_of_cb <- cb_results[1];
 				}
-
+				
+				if(last_cycle_update != cycle) //avoid duplicate triggering
+				{
+					last_cycle_update <- cycle;
+					if(has_desire(escape_desire)) { triggered_escape_early <- triggered_escape_early +1 ; }
+					if(has_desire(defend_desire)) { triggered_defense_early <- triggered_defense_early +1 ; }
+				}
+				
 				if (risk_awareness > 2 and react)
 				{
 					do add_belief(potential_danger_belief); // will add call_911_desire desire by rule
-//					if(show_residents_messages) { do status("I perceived smoke signals"); }
+					//if(show_residents_messages) { do status("I perceived smoke signals"); }
 					if(show_residents_BDI) { do status("potential_danger_belief added"); }
 				}
 				else
 				{
 					if(ignored_because_of_cb) { nb_of_smoke_signals_ignored_cb <- nb_of_smoke_signals_ignored_cb + 1; }
-//					if(show_residents_messages) { do status("I ignored smoke signals"); }
+					//if(show_residents_messages) { do status("I ignored smoke signals"); }
 				}
 			}
 		}
 	}
 	
-	//If the agent perceives is hurt by a fire it should escape
+	//Close fire
 	perceive target: plot in: hurting_distance 
-//	perceive target: plot in: field_of_view 
-//	when: alive and ! in_safe_place and ! has_belief(immediate_danger_belief) {
 	when: alive and ! in_safe_place {
 		if(burning)
 		{
 			fire_perceive_total <- fire_perceive_total +1;
 			ask myself{
 				
-//				//since he perceives flames, we're going to assume the probabilty to react goes up
-//				probability_to_react <- probability_to_react + 0.3;
-//				if(probability_to_react > 1) { probability_to_react <- 1.0; }
+				////since he perceives flames, we're going to assume the probabilty to react goes up
+				//probability_to_react <- probability_to_react + 0.3;
+				//if(probability_to_react > 1) { probability_to_react <- 1.0; }
 
-//				bool react <- flip(probability_to_react);
-				bool react <- true;
+				bool react <- true; //there's a close fire, he should react by default
 				bool ignored_because_of_cb <- false;
 				
 				if(cognitive_biases_influence) {
@@ -209,8 +213,14 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 					ignored_because_of_cb <- cb_results[1];
 				}
 				
+				if(last_cycle_update != cycle) //avoid duplicate triggering during same cycle (I believe it should not happen, it seems to be a bug)
+				{
+					last_cycle_update <- cycle;
+					if(!has_desire(escape_desire)) { triggered_escape_late <- triggered_escape_late +1 ; }
+					if(!has_desire(defend_desire)) { triggered_defense_early <- triggered_defense_early +1 ; }
+				}
+				
 				if(!has_desire(escape_desire) and (risk_awareness >= 3 or react)) 
-//				if((risk_awareness >= 3 and react)) 
 				{
 					do remove_belief(no_danger_belief);
 					do remove_belief(potential_danger_belief);
@@ -219,13 +229,13 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 					
 					escape_target <- get_closest_safe_place();
 					
-//					if(show_residents_messages) { do status("I'm hurt, need to escape"); }
+					//if(show_residents_messages) { do status("I'm hurt, need to escape"); }
 					if(show_residents_BDI) { do status("immediate_danger_belief added"); }
 				}
 				else
 				{
 					if(ignored_because_of_cb) { nb_of_fire_signals_ignored_cb <- nb_of_fire_signals_ignored_cb + 1; }
-//					if(show_residents_messages) { do status("I ignored flames signals"); }
+					//if(show_residents_messages) { do status("I ignored flames signals"); }
 				}
 			}
 		}

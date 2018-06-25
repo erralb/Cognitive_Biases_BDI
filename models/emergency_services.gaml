@@ -308,12 +308,12 @@ species policemen parent: people
 				if(show_police_messages) { do status("I'm going to help " + resident_to_help); }
 				remove resident_to_help from: residents_who_have_asked_help;
 			} 
-//			else if (length(people_to_warn) > 0) //this is dodgy, because they cannot know who hasn't been warned. It should just be a door to door thing to check on people or driving around "making noise" to give the alert
-//			{
-//				resident_to_help <- people_to_warn closest_to self;
-//				remove resident_to_help from: people_to_warn;
-//				if(show_police_messages) { do status(" : I'm going to help " + resident_to_help); }
-//			}
+			else if (length(people_to_warn) > 0) //this is dodgy, because they cannot know who hasn't been warned. It should just be a door to door thing to check on people or driving around "making noise" to give the alert
+			{
+				resident_to_help <- people_to_warn closest_to self;
+				remove resident_to_help from: people_to_warn;
+				if(show_police_messages) { do status(" : I'm going to help " + resident_to_help); }
+			}
 		}
 
 		if (resident_to_help != nil)
@@ -333,7 +333,22 @@ species policemen parent: people
 				} 
 				else //try to convice resident to evacuate
 				{
-					if (flip(0.7)) //70% of chance to convice him. TODO: should be parametrized and influence by cognitive biases
+					
+					bool react <- flip(0.7) ;//70% of chance to convice him. TODO: should be parametrized and influence by cognitive biases
+//					bool ignored_because_of_cb <-false;
+//					ask resident_to_help
+//					{
+//						probability_to_react <- 0.7;
+//						if(cognitive_biases_influence) {
+//							nb_of_warning_msg_cb <- nb_of_warning_msg_cb + 1; //count messages sent to residents that are under cb influence
+//							list<bool> cb_results <- cognitive_biases("polic evacuate_resident reflex"); //Apply cognitive biases
+//							react <- cb_results[0];
+//							ignored_because_of_cb <- cb_results[1];
+//						}
+//					}
+					
+//					if (flip(0.7)) //70% of chance to convice him. TODO: should be parametrized and influence by cognitive biases
+					if (react)
 					{
 						ask(resident_to_help)
 						{
@@ -349,6 +364,7 @@ species policemen parent: people
 					} 
 					else
 					{
+						did_not_want_to_evacuate <- did_not_want_to_evacuate +1;
 						resident_to_help.warned <- true;
 						if(show_police_messages) { do status("I warned the resident but could not convince him he should to evacuate"); }
 					}

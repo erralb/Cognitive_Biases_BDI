@@ -109,7 +109,11 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 			//Hurt people
 			loop victim over: victims
 			{
-				victim.on_alert <- true;
+				ask victim
+				{
+					on_alert <- true;
+					do color; //change color
+				}
 				
 				// Burn : - 30 energy  at distance 1,  -15 at 2,  -10 at 3
 				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));

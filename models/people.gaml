@@ -76,7 +76,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	predicate call_911_desire <- new_predicate("call_911_desire",30);
 	predicate defend_desire <- new_predicate("defend_desire",40);
 	predicate escape_desire <- new_predicate("escape_desire",50); //desire to escape is the equal to the desire to shelter
-	
+		
 	// OLD BDI - Left for now for firefighters and policemen compatibility TODO convert them to simple_bdi architecture
 	list<string> desires <- nil;
 	string intention <- nil;
@@ -90,6 +90,9 @@ species people skills: [moving, fipa] control: simple_bdi
 	string no_danger <- "No danger";
 	string potential_danger <- "Potential danger";
 	string immediate_danger <- "Immediate danger";
+
+	//Simulation tools
+	int last_cycle_update <- 0; //use to avoid duplicating action within same cycle
 
 	init
 	{
@@ -106,6 +109,9 @@ species people skills: [moving, fipa] control: simple_bdi
 
 	aspect sphere3D { draw sphere(3) at: { location.x, location.y, location.z + 3 } color: color; }
 //	aspect sphere3D { draw circle(3) at: { location.x, location.y } color: color; } //2d version
+
+	//change color when on alert
+	action color { color <- on_alert ? rgb(int(energy), int(energy), 0) : rgb(0, int(energy), 0); }
 	
 	action status (string msg)
 	{
