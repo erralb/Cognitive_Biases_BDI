@@ -1,5 +1,7 @@
- Bushfires simulation based on the Australian Black Saturday
+GAMA Bushfires simulation based on the Australian Black Saturday
 
- Implementing the BDI Architecture
+Using GAML Language : http://gama-platform.org/
 
- Implementting Cognitive Biases Algorithms
+Implementing the BDI Architecture
+
+Implementting Cognitive Biases Algorithms
