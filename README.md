@@ -1,5 +1,7 @@
 # Bushfires simulation based on the Australian Black Saturday
 
+![alt Interface screenshot](https://raw.githubusercontent.com/ierpe/Cognitive_Biases_BDI/master/doc/interface.png)
+
 Implementing the *BDI Architecture*
 Implementting *Cognitive Biases*
 
