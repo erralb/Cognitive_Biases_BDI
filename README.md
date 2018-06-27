@@ -2,8 +2,7 @@
 
 ![alt Interface screenshot](https://github.com/ierpe/Cognitive_Biases_BDI/blob/master/doc/Interface.png?raw=true)
 
-Implementing the *BDI Architecture*
-Implementting *Cognitive Biases*
+Implementing the *BDI Architecture* and *Cognitive Biases*
 
 Using GAML Language : http://gama-platform.org/
 
