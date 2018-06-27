@@ -310,27 +310,29 @@ species people skills: [moving, fipa] control: simple_bdi
 		
 		if(neglect_of_probability_cb_influence)
 		{
-			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") was influenced by neglect_of_probability in "+called_from); }
 			influence <- bool(neglect_of_probability(beliefName, perceivedProbability));
-			if(influence) { nb_cb_influences <- nb_cb_influences + 1; }
-		}
-		
-		if(illusory_truth_effect_cb_influence)
-		{
-			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by illusory_truth_effect in "+called_from); }
-			do illusory_truth_effect(potential_danger_belief, probability_to_react);
-			nb_cb_influences <- nb_cb_influences + 1;
-			influence <- true;
+			
+			if(influence) { 
+				nb_cb_influences <- nb_cb_influences + 1;
+				if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") was influenced by neglect_of_probability in "+called_from); }
+			}
 		}
 		
 		if(semmelweis_reflex_cb_influence)
 		{
-			react <- bool(semmelweis_reflex(probability_to_react));
-			if(!react) { 
-				if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by the semmelweis_reflex in "+called_from); }
+			influence <- bool(semmelweis_reflex(beliefName));
+			if(!influence) { 
 				nb_cb_influences <- nb_cb_influences + 1;
-				influence <- true;
+				if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by the semmelweis_reflex in "+called_from); }
 			}
+		}
+		
+		if(illusory_truth_effect_cb_influence)
+		{
+			do illusory_truth_effect(potential_danger_belief, probability_to_react);
+			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") is influenced by illusory_truth_effect in "+called_from); }
+			nb_cb_influences <- nb_cb_influences + 1;
+			influence <- true;
 		}
 		
 		return influence;
@@ -350,8 +352,7 @@ species people skills: [moving, fipa] control: simple_bdi
 		{
 			cb_nob_occurences <- cb_nob_occurences + 1; //count occurences
 			
-			
-			float ancientBeliefProbability <- (get_belief(no_danger_belief)!=nil) ? get_belief(no_danger_belief).strength : 0 ; //get ancient belief strength
+			float ancientBeliefProbability <- get_belief(beliefName).strength ; //get ancient belief strength
 			float newBeliefProbability <- (ancientBeliefProbability + perceivedProbability > 100) ? 100.0 : ancientBeliefProbability + perceivedProbability; //get new beliefStrengh (cannot go over 100)
 			
 			float increasedProbability <- newBeliefProbability; //just for readability
@@ -387,23 +388,22 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	//Cognitive Bias : Semmelweis Reflex : Clinging to a belief
 	//Will influence the agent's belief on no / potential / immediate danger : Should I keep my belief/certainty?
-	action semmelweis_reflex(float beliefProbability)
+	action semmelweis_reflex(predicate beliefName)
 	{
-		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
-		cb_sr_occurences <- cb_sr_occurences + 1;
-		
-		if (beliefProbability = 0 and nb_of_warning_msg <= 3) //he does not believe the danger will occur, I keep my belief 
+		cb_sr_occurences <- cb_sr_occurences +1;
+		if( (!has_belief(beliefName) or get_belief(beliefName).strength = 0) and (nb_of_warning_msg <= 3 or (!has_perceived_smoke and !has_perceived_fire)) )
 		{
+			do remove_all_beliefs(beliefName);
+			do add_belief(beliefName, 0.0); // is this correct ... ?
 			return true;
 		}
-		else if (beliefProbability > 0 and nb_of_warning_msg > 3) //I started to believe, I should change my certainty
+		else if ( get_belief(beliefName).strength > 0 or (nb_of_warning_msg > 3 or has_perceived_smoke or has_perceived_fire) ) //I started to believe, I should change my certainty
 		{
+			do remove_all_beliefs(beliefName);
+			do add_belief(beliefName, probability_to_react); // is this correct ... ?
 			return false;
 		}
-		
-		return true;
 	}
-	
 	
 	//Cognitive Illusory Truth effect
 	//Will re-inforce agent's belief
@@ -417,13 +417,17 @@ species people skills: [moving, fipa] control: simple_bdi
 		if( ! has_belief(beliefName) )
 		{
 			do add_belief(beliefName, perceivedProbability);
+			return false;
 		}
 		else //reinforce belief strength
 		{
-			float illusoryProbability <- perceivedProbability * nb_of_warning_msg;
-//			do remove_belief(beliefName);
+			float illusoryProbability <- perceivedProbability +  perceivedProbability * nb_of_warning_msg / 100;
+			if(illusoryProbability > 100) { illusoryProbability <- 100.0; }
+			do remove_all_beliefs(beliefName);
 			do add_belief(beliefName, illusoryProbability);
+			return true;
 		}
+		
 	}
 
 }

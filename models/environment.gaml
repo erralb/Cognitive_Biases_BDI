@@ -100,31 +100,36 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 		{
 			// Build a list of people at plot's hurting distance
 			list<plot> plot_at_hurting_distance <- self neighbors_at hurting_distance;
-			list<people> victims;
-			loop pl over: plot_at_hurting_distance
+			
+			if(plot_at_hurting_distance contains resident or firefighters or policemen)
 			{
-				victims <- victims + every_resident_alive inside pl where (!each.in_safe_place);
-				victims <- victims + firefighters inside pl where (each.alive);
-				victims <- victims + policemen inside pl where (each.alive) where (!each.in_safe_place);
-			}
-
-			//Hurt people
-			loop victim over: victims
-			{
-				ask victim
+				list<people> victims;
+				loop pl over: plot_at_hurting_distance
 				{
-					on_alert <- true;
-					do color; //change color
+					victims <- victims + every_resident_alive inside pl where (!each.in_safe_place);
+					victims <- victims + firefighters inside pl where (each.alive);
+					victims <- victims + policemen inside pl where (each.alive) where (!each.in_safe_place);
 				}
-				
-				// Burn : - 30 energy  at distance 1,  -15 at 2,  -10 at 3
-				victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
-				
-				if (victim.energy <= 0) {  // no more energy, person's dead
-					if(show_residents_messages and victim.alive) { ask victim { do status("I'm dead :-("); } } //little to trick to display the message only once
-					victim.alive <- false;
+	
+				//Hurt people
+				loop victim over: victims
+				{
+					ask victim
+					{
+						on_alert <- true;
+						do color; //change color
+						do add_belief(immediate_danger_belief, 100.0); //they are hurt, they cannot ignore this...
+					}
+					
+					// Burn : - 30 energy  at distance 1,  -15 at 2,  -10 at 3
+					victim.energy <- victim.energy - int(30 / max([1, victim distance_to self]));
+					
+					if (victim.energy <= 0) {  // no more energy, person's dead
+						if(show_residents_messages and victim.alive) { ask victim { do status("I'm dead :-("); } } //little to trick to display the message only once
+						victim.alive <- false;
+					}
+					else if (string(victim) contains "resident") { victim.speed <- victim.speed - rnd(0, 0.3); } // slow down hurt people
 				}
-				else if (string(victim) contains "resident") { victim.speed <- victim.speed - rnd(0, 0.3); } // slow down hurt people
 			}
 
 			// Dammage buildings

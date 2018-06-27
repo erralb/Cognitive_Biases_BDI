@@ -69,16 +69,16 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 				neglect_of_probability_cb_influence <- true; 
 				nb_neglect_of_probability <- nb_neglect_of_probability + 1;
 			}
-//			if(flip(cognitive_biases_distribution))
-//			{ 
-//				semmelweis_reflex_cb_influence <- true; 
-//				nb_semmelweis_reflex <- nb_semmelweis_reflex + 1;
-//			}
-//			if(flip(cognitive_biases_distribution))
-//			{
-//				illusory_truth_effect_cb_influence <- true; 
-//				nb_illusory_truth_effect <- nb_illusory_truth_effect + 1;
-//			}
+			if(flip(cognitive_biases_distribution))
+			{ 
+				semmelweis_reflex_cb_influence <- true; 
+				nb_semmelweis_reflex <- nb_semmelweis_reflex + 1;
+			}
+			if(flip(cognitive_biases_distribution))
+			{
+				illusory_truth_effect_cb_influence <- true; 
+				nb_illusory_truth_effect <- nb_illusory_truth_effect + 1;
+			}
 		}
 	}
 	
@@ -167,7 +167,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	
 	//Smoke perception : he should give the alert and stay alert, if his awareness is high enough
 	perceive target: plot in: smoke_view 
-	when: alive and ! in_safe_place and ! has_belief(immediate_danger_belief)  {
+	when: ! has_perceived_smoke and alive and ! in_safe_place and ! has_belief(immediate_danger_belief)  {
 		
 		if(self != nil and self.burning and !myself.has_perceived_smoke)
 		{
@@ -182,7 +182,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 				bool ignored_because_of_cb <- false;
 				bool accepted <- false;
 				
-				//direct perception triggers beliefs if hiw awareness is above average
+				//direct perception triggers beliefs if his awareness is above average
 				if (risk_awareness > risk_awareness_average)
 				{
 					do add_belief(potential_danger_belief); // will add call_911_desire desire by rule
@@ -210,7 +210,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	
 	//Close fire perception : he should escape or trigger his fire plan
 	perceive target: plot in: hurting_distance 
-	when: alive and ! in_safe_place  {
+	when: ! has_perceived_fire and alive and ! in_safe_place  {
 		
 		if(self != nil and self.burning and !myself.has_perceived_fire)
 		{
@@ -224,10 +224,14 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 				//since he perceives flames, we're going to assume the probabilty to react goes up
 				probability_to_react <- probability_to_react + 20 > 100 ? 100.0 : probability_to_react + 20;
 				
-				//direct perception triggers beliefs
-				do remove_all_beliefs(no_danger_belief);
-				do remove_all_beliefs(potential_danger_belief);
-				do add_belief(immediate_danger_belief,probability_to_react);
+				//direct perception add beliefs if his risk_awareness is above 0
+				//we consider that 0 awareness would represent a person not able to react to danger at all, like a baby or a handicapped person 
+				if (risk_awareness > 0)
+				{
+					do remove_all_beliefs(no_danger_belief);
+					do remove_all_beliefs(potential_danger_belief);
+					do add_belief(immediate_danger_belief,probability_to_react);
+				}
 
 				//cognitive biases might influence beliefs
 				if(cognitive_biases_influence) {
@@ -307,7 +311,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			at_home <- false;
 			at_work <- false;
 			in_safe_place <- true;
-			if(show_residents_messages) { write (string(self) + " : I escaped safely"); }
+			if(show_residents_messages) {do status("I escaped safely"); }
 		}
 	}
 
