@@ -21,7 +21,10 @@ species threat_monitors parent: resident
 {
 	init
 	{
-		probability_to_react <- 0.7;
+		probability_to_react <- 70.0;
+		default_probability_to_react <- 70.0;
+
+		do add_belief(no_danger_belief,50.0);
 
 		color <- # purple;
 

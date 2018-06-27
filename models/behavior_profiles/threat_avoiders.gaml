@@ -22,8 +22,10 @@ species threat_avoiders parent: resident
 
 	init
 	{
-		probability_to_react <- 0.8; //High probability to react
-		default_probability_to_react <- 0.9;
+		probability_to_react <- 80.0; //High probability to react
+		default_probability_to_react <- 80.0;
+
+		do add_belief(no_danger_belief,50.0);
 		
 		color <- # purple;
 
@@ -34,8 +36,6 @@ species threat_avoiders parent: resident
 		risk_awareness <- max([0, rnd(4, 5) + risk_awareness]);
 		knowledge <- max([0, rnd(3, 5) + knowledge]);
 		
-		//Default beliefs
-		do add_belief(no_danger_belief,0.5);
 	}
 	
 	//escape first

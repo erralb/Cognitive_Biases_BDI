@@ -56,6 +56,8 @@ grid plot height: grid_size width: grid_size neighbors: 8 use_regular_agents: fa
 	
 	bool is_road <- false;
 	bool is_building <- false;
+	
+	int last_cycle_update <- 0;
 
 	init
 	{

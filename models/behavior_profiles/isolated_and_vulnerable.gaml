@@ -27,11 +27,14 @@ species isolated_and_vulnerable parent: resident
 {
 	init
 	{
+
+		probability_to_react <- 10.0; //lowest probability to react
+		default_probability_to_react <- 10.0;
+
+		do add_belief(no_danger_belief,70.0);
+		
 		work <- home; //we assume this profile is not working
 		color <- rgb(0, int(energy), int(energy)); //different color
-
-		probability_to_react <- 0.1; //lowest probability to react
-		default_probability_to_react <- 0.1;
 
 		// Everything is low... poor little ones!
 		speed <- rnd(5.0, 8.0) # km / # h;
@@ -39,8 +42,6 @@ species isolated_and_vulnerable parent: resident
 		risk_awareness <- max([0, rnd(0, 1) + risk_awareness]);
 		knowledge <- max([0, rnd(0, 1) + knowledge]);
 		
-		//Default beliefs
-		do add_belief(no_danger_belief,0.7);
 	}
 	
 	//then can only escape

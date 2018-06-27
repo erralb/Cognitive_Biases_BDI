@@ -60,6 +60,7 @@ global
 	
 	int alert_msg_sent <- 0 update: alert_msg_sent;
 	int nb_residents_w_answered_1st_call <- 0 update: nb_residents_w_answered_1st_call;
+	int nb_residents_w_stopped_1st_call <- 0 update: nb_residents_w_stopped_1st_call;
 	int evacuation_reminder_cycle <- 60; //one reminder per hour
 	
 	bool tactical_fireman <- false;
@@ -88,11 +89,22 @@ global
 	
 	//Cognitive Biases
 	bool use_cognitive_biases <- true;
-	int cognitive_biases_influence_occurence <- 0;
-	int nb_cb_influences <- 0;
-	int nb_of_warning_msg_cb <- 0; //total warning message for people with cb
-	int nb_ignored_msg_while_cb <- 0;
 	float cognitive_biases_distribution <- 0.5;
+	
+	int nb_cb_influences <- 0;
+	
+	int nb_of_warning_msg_cb <- 0; //total warning message for people with cb
+	int nb_ignored_msg_while_cb <- 0; //ignored warning messages for people with cb
+	
+	int cb_nob_occurences <- 0; //neglect of probability
+	int cb_sr_occurences <- 0; //semmelweis reflex
+	int cb_iot_occurences <- 0; //illusory of truth
+	int cognitive_biases_influence_occurence <- 0 update: cb_nob_occurences + cb_sr_occurences + cb_iot_occurences;
+	
+	//For neglect of probability
+	float small_probability <- 0.2;
+	float medium_high_probability <- 0.6;
+	float risk_awareness_average <- 3.0;
 	
 	//keep count of perceives and when they were ingored
 	int smoke_perceive_total <- 0;
@@ -433,6 +445,7 @@ experiment Main type:gui
 
 
 ////Creates a null pointer exception : https://github.com/gama-platform/gama/issues/2432
+////experiment Main_Batch parent: Main type: batch repeat: 2 keep_seed: false until: fire_size <= 0 or cycle > 1200
 //experiment Main_Batch parent: Main type: batch repeat: 2 keep_seed: false until: fire_size <= 0 or cycle > 1200
 //{
 //	init { 
@@ -483,3 +496,6 @@ experiment Main type:gui
 //		}
 //	}
 //}
+
+
+

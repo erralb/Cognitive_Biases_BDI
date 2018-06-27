@@ -3,6 +3,9 @@
 *
 * Author: Pierre Blarre
 * 
+* Authors of the Cognitive Biases algorithms  : Maël Arnaud, Carole Adam, Julie Dugdale
+* Scientific article : The role of cognitive biases in reactions to bushfires
+* 
 * Based on a model without BDI architecture by : Sofiane Sillali, Thomas Artigue, Pierre Blarre
 * 
 * Description: 
@@ -42,10 +45,13 @@ species people skills: [moving, fipa] control: simple_bdi
 	int training; //level of training will influence the three previous values
 	int fear_of_fire <- rnd(0, 1); //will influence decision making	
 	
-	float default_probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
-	float probability_to_react <- 0.60; //by default we suppose at least 60% of people will react to an alert
+	float default_probability_to_react <- 60.0; //by default we suppose at least 60% of people will react to an alert
+	float probability_to_react <- 60.0; //by default we suppose at least 60% of people will react to an alert
 	int nb_of_warning_msg <- 0; //total warning messages
 	int nb_of_ignored_warning_msg <- 0;
+	
+	int nb_of_stop_msg <- 0; //total finished alert messages
+	int nb_of_ignored_stop_msg <- 0;
 	
 	//Definition of the variables featured in the BDI architecture. 
 	//How is this used, I am not sure. TODO: research how this should be used
@@ -59,7 +65,6 @@ species people skills: [moving, fipa] control: simple_bdi
 	bool neglect_of_probability_cb_influence <- false;
 	bool semmelweis_reflex_cb_influence <- false;
 	bool illusory_truth_effect_cb_influence <- false;
-	
 	
     //Beliefs
 	float default_belief_strengh <- 0.5;
@@ -76,6 +81,14 @@ species people skills: [moving, fipa] control: simple_bdi
 	predicate call_911_desire <- new_predicate("call_911_desire",30);
 	predicate defend_desire <- new_predicate("defend_desire",40);
 	predicate escape_desire <- new_predicate("escape_desire",50); //desire to escape is the equal to the desire to shelter
+	
+	//Avoid running perceptions more than once
+	//The problem is, when there's fire detection, the agents perceives more than one burning plot
+	//The result is that he's going to go through the same choice more than once for the same fire
+	//So we will store when perception occured to avoid duplication
+	//TODO: is it right? Shouldn't we consider than the more burning plots he sees the more strengh his beliefs should have (or change anyway)?
+	bool has_perceived_smoke <- false;
+	bool has_perceived_fire <- false;
 		
 	// OLD BDI - Left for now for firefighters and policemen compatibility TODO convert them to simple_bdi architecture
 	list<string> desires <- nil;
@@ -289,17 +302,17 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	//Apply cognitive biases to probability to react
 	//returns true/false on reaction and true/false to tell if it was influenced by a cognitive bias
-	action cognitive_biases(string called_from)
+	action cognitive_biases(predicate beliefName, float perceivedProbability, string called_from <- "")
+//	action cognitive_biases(string called_from <- "")
 	{
 		bool influence <- true;
-		bool react;
+		bool react <- true; //should be removed
 		
 		if(neglect_of_probability_cb_influence)
 		{
 			if(show_cognitive_biases_messages) { do status("My probability to react ("+probability_to_react+") was influenced by neglect_of_probability in "+called_from); }
-			do neglect_of_probability(probability_to_react);
-			nb_cb_influences <- nb_cb_influences + 1;
-			influence <- true;
+			influence <- bool(neglect_of_probability(beliefName, perceivedProbability));
+			if(influence) { nb_cb_influences <- nb_cb_influences + 1; }
 		}
 		
 		if(illusory_truth_effect_cb_influence)
@@ -320,38 +333,55 @@ species people skills: [moving, fipa] control: simple_bdi
 			}
 		}
 		
-		react <- flip(probability_to_react);
-// 		do status("("+probability_to_react+") - "+[react,influence]);
-		
-		return [react,influence];
+		return influence;
 	}
 	
+	
 	//Cognitive Bias : Neglect of probability
-	//Will influence the agent's probability_to_react (decisions on going home or escaping)
-	action neglect_of_probability(float perceivedProbability)
+	//Will influence the agent's belief's strength
+	action neglect_of_probability(predicate beliefName, float perceivedProbability)
 	{
-		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		//TODO Should i do that or not?? If yes should I add it to the end of the algorithm?
+		//if(!has_belief(beliefName)) { do add_belief(beliefName, probability_to_react);}
 		
-		float newBeliefProbability <- probability_to_react + perceivedProbability;
+		bool probabilityHasChanged <- false;
 		
-		if (newBeliefProbability > 1) { newBeliefProbability <- 1.0; } //Cannot be over 1
-		
-//		if( newBeliefProbability < 0.34 and risk_awareness <= 3 and knowledge < 3) //1 ignore what is unlikely to happen, even if it's happening
-		if( newBeliefProbability < 0.34 and risk_awareness < 3) //1 ignore what is unlikely to happen, even if it's happening
+		if(has_belief(beliefName)) //check if 
 		{
-			newBeliefProbability <- 0.1;
-		}
-//		else if( newBeliefProbability  < 0.34 and (risk_awareness > 3 or knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
-		else if( newBeliefProbability  < 0.34 and (knowledge < 3) )//2 not likely to happen, but I desire/dread it so I will react
-		{
-			newBeliefProbability <- 0.9;
-		}
-		else if( newBeliefProbability  > 0.6 ) //3 under-estimate a high and medium probability of something happening
-		{
-			newBeliefProbability <- 0.3;
+			cb_nob_occurences <- cb_nob_occurences + 1; //count occurences
+			
+			
+			float ancientBeliefProbability <- (get_belief(no_danger_belief)!=nil) ? get_belief(no_danger_belief).strength : 0 ; //get ancient belief strength
+			float newBeliefProbability <- (ancientBeliefProbability + perceivedProbability > 100) ? 100.0 : ancientBeliefProbability + perceivedProbability; //get new beliefStrengh (cannot go over 100)
+			
+			float increasedProbability <- newBeliefProbability; //just for readability
+			float decreasedProbability <- ancientBeliefProbability - perceivedProbability;
+			
+			//1 - ignore what is unlikely to happen, even if it's happening
+            //1 - if newBeliefProbability is small and consequences are not perceived to be dire and consequences are not perceived to be extremely favourable
+			if( newBeliefProbability < small_probability and risk_awareness < risk_awareness_average and !has_belief(immediate_danger_belief) )
+			{
+				do remove_all_beliefs(beliefName); //stop believing
+				probabilityHasChanged <- true;
+			}
+			//2 - not likely to happen, but I desire/dread it so I will react
+			//2 - if beliefProbability is small and (consequences are perceived to be dire or consequences are perceived to be extremely favourable)
+			else if( newBeliefProbability  < small_probability and (risk_awareness >= 3 or has_belief(immediate_danger_belief)) )
+			{
+				do remove_all_beliefs(beliefName);
+				do add_belief(beliefName, increasedProbability); // increase the Belief Probability
+				probabilityHasChanged <- true;
+			}
+			//3 - under-estimate a high and medium probability of something happening
+			else if( newBeliefProbability  > medium_high_probability ) 
+			{
+				do remove_all_beliefs(beliefName);
+				do add_belief(beliefName, decreasedProbability); // decrease Belief Probability
+				probabilityHasChanged <- true;
+			}
 		}
 		
-		probability_to_react <- newBeliefProbability;
+		return probabilityHasChanged;
 	}
 	
 	
@@ -360,6 +390,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	action semmelweis_reflex(float beliefProbability)
 	{
 		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		cb_sr_occurences <- cb_sr_occurences + 1;
 		
 		if (beliefProbability = 0 and nb_of_warning_msg <= 3) //he does not believe the danger will occur, I keep my belief 
 		{
@@ -381,6 +412,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	action illusory_truth_effect(predicate beliefName, float perceivedProbability)
 	{
 		cognitive_biases_influence_occurence <- cognitive_biases_influence_occurence + 1;
+		cb_iot_occurences <- cb_iot_occurences + 1;
 		
 		if( ! has_belief(beliefName) )
 		{

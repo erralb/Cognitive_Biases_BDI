@@ -23,8 +23,11 @@ species livelihood_defenders parent: resident
 {
 	init
 	{
-		probability_to_react <- 0.9; //Highest probability to react
-		default_probability_to_react <- 0.9;
+		probability_to_react <- 90.0; //Highest probability to react
+		default_probability_to_react <- 90.0;
+		
+		do add_belief(no_danger_belief,20.0);
+		do add_belief(can_defend_belief,100.0);
 
 		home <- work;
 		escape_target <- home;
@@ -34,9 +37,6 @@ species livelihood_defenders parent: resident
 		risk_awareness <- max([0, rnd(1, 2) + risk_awareness]);
 		knowledge <- max([0, rnd(3, 4) + knowledge]);
 		
-		//Default beliefs
-		do add_belief(no_danger_belief,0.2);
-		do add_belief(can_defend_belief,1.0);
 	}
 	
 	//They'd rather die than escape...
