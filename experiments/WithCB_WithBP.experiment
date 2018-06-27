@@ -10,58 +10,109 @@ model Bushfires_BDI_Cognitive_Biases
 
 import "../models/environment.gaml"
 
-experiment WithCB_WithBP parent: Main
+
+experiment All_CB parent: Main
 {
-	init { simulation_name <- "With_Cognitive_Biases_With_Behavior_Profiles"; }
+	parameter "Cognitive Biases Distribution" var: cognitive_biases_distribution init: 1.0 category: "Cognitive Biases (hit reload after changing these values)" max: 1.0;
+	
+	init { simulation_name <- "Forrest_Fires_With_Cognitive_Biases_With_Behavior_Profiles"; }
 }
-
-
-experiment Batch_WithCB_WithBP parent: Main type: batch repeat: 12 keep_seed: false until: fire_size <= 0 or cycle > 5000
+experiment No_CB parent: Main
+{
+	parameter "Cognitive Biases" var: use_cognitive_biases init: false category: "Cognitive Biases (hit reload after changing these values)";
+	
+	init { simulation_name <- "Forrest_Fires_With_Cognitive_Biases_With_Behavior_Profiles"; }
+}
+experiment One_Fire parent: Main
+{
+	parameter "Uncontrollable fire size" var: fire_uncontrollable init: 2 category: "Global";
+	
+	init { 
+		
+		simulation_name <- "One_Fire_With_Cognitive_Biases_With_Behavior_Profiles"; 
+		
+		ask fire { do die; }
+		ask plot { burning <- false; }
+		
+		fire_uncontrollable <- 3;
+		create firefighters number: 10;
+		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
+	}
+}
+experiment Two_Fires parent: Main
 {
 	init { 
-		simulation_name <- "Batch_With_Cognitive_Biases_With_Behavior_Profiles";
-		result_saved <- false;
-	}
-	
-	permanent
-	{
-		display Survivor_pie
-		{
-			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
-			{
-				data "Fire Size" value: fire_size / 50 color: # orange;
-				data "Cognitive Biases influence" value: simulations collect cognitive_biases_influence_occurence color: # blue;
-				data "Dead" value: simulations collect length(every_resident where !each.alive) color: # red;
-				data "Alerted" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
-				data "Safe" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
-				data "Damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
-			}
-
-			// Camembert des survivants par personnalité
-			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
-			}
-
-			// Camembert des morts par personnalité
-			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
-			{
-				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
-				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
-				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
-				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
-				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
-				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
-				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
-			}
-
-		}
-
+		
+		simulation_name <- "Two_Fires_With_Cognitive_Biases_With_Behavior_Profiles"; 
+		
+		ask fire { do die; }
+		ask plot { burning <- false; }
+		
+		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
+		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
 	}
 }
+experiment Forrest_Fires parent: Main
+{
+	init { 
+		
+		simulation_name <- "Forrest_Fires_With_Cognitive_Biases_With_Behavior_Profiles"; 
+		
+		ask fire { do die; }
+		ask plot { burning <- false; }
+		
+		create fire number: 1 with: [choosed_location::{ 170, 210 }];
+		create fire number: 1 with: [choosed_location::{ 750, 300 }];
+	}
+}
+
+
+//experiment Batch_WithCB_WithBP parent: Main type: batch repeat: 12 keep_seed: false until: fire_size <= 0 or cycle > 5000
+//{
+//	init { 
+//		simulation_name <- "Batch_With_Cognitive_Biases_With_Behavior_Profiles";
+//		result_saved <- false;
+//	}
+////	
+////	permanent
+////	{
+////		display Survivor_pie
+////		{
+////			chart "Global" type: series size: { 0.5, 1 } position: { 0, 0 }
+////			{
+////				data "Fire Size" value: fire_size / 50 color: # orange;
+////				data "Cognitive Biases influence" value: simulations collect cognitive_biases_influence_occurence color: # blue;
+////				data "Dead" value: simulations collect length(every_resident where !each.alive) color: # red;
+////				data "Alerted" value: simulations collect length(every_resident where each.on_alert) color: # yellow;
+////				data "Safe" value: simulations collect length(every_resident where each.in_safe_place) color: # green;
+////				data "Damage" value: simulations collect ((building sum_of (each.damage)) / length(building)) color: # darkgrey;
+////			}
+////
+////			// Camembert des survivants par personnalité
+////			chart "Camembert des survivants par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0.5 }
+////			{
+////				data "can_do_defenders" value: simulations collect length(can_do_defenders where each.alive) color: # green;
+////				data "considered_defenders" value: simulations collect length(considered_defenders where each.alive) color: # darkgreen;
+////				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where each.alive) color: # lightgreen;
+////				data "threat_monitors" value: simulations collect length(threat_monitors where each.alive) color: # purple;
+////				data "threat_avoiders" value: simulations collect length(threat_avoiders where each.alive) color: # violet;
+////				data "unaware_reactors" value: simulations collect length(unaware_reactors where each.alive) color: # cyan;
+////				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where each.alive) color: # blue;
+////			}
+////
+////			// Camembert des morts par personnalité
+////			chart "Camembert des morts par Personnalité" type: pie size: { 0.5, 0.5 } position: { 0.5, 0 }
+////			{
+////				data "can_do_defenders" value: simulations collect length(can_do_defenders where !each.alive) color: # green;
+////				data "considered_defenders" value: simulations collect length(considered_defenders where !each.alive) color: # darkgreen;
+////				data "livelihood_defenders" value: simulations collect length(livelihood_defenders where !each.alive) color: # lightgreen;
+////				data "threat_monitors" value: simulations collect length(threat_monitors where !each.alive) color: # purple;
+////				data "threat_avoiders" value: simulations collect length(threat_avoiders where !each.alive) color: # violet;
+////				data "unaware_reactors" value: simulations collect length(unaware_reactors where !each.alive) color: # cyan;
+////				data "isolated_and_vulnerable" value: simulations collect length(isolated_and_vulnerable where !each.alive) color: # blue;
+////			}
+////
+////		}
+////
+////	}
+//}

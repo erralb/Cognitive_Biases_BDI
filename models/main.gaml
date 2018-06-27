@@ -63,6 +63,12 @@ global
 	int nb_residents_w_stopped_1st_call <- 0 update: nb_residents_w_stopped_1st_call;
 	int evacuation_reminder_cycle <- 60; //one reminder per hour
 	
+	string msg_there_is_a_fire <- "Resident says there is a fire";
+	string msg_firefighters_extinguished <- "Firefighters say fires are extinguished";
+	string msg_policemen_extinguished <- "Policemen say fires are extinguished";
+	string msg_policemen_evacuation <- "General evacuation required";
+	string msg_policemen_alert_residents <- "Alert for Residents : Go into shelter";
+	
 	bool tactical_fireman <- false;
 	
 	//Residents distribution (we use a total of 100 people, for the simulation is slow above this number)
@@ -95,6 +101,8 @@ global
 	
 	int nb_of_warning_msg_cb <- 0; //total warning message for people with cb
 	int nb_ignored_msg_while_cb <- 0; //ignored warning messages for people with cb
+	
+	int nb_of_stop_msg_cb <- 0; //total warning message for people with cb
 	
 	int cb_nob_occurences <- 0; //neglect of probability
 	int cb_sr_occurences <- 0; //semmelweis reflex
@@ -142,6 +150,7 @@ global
 	bool trained_population <- false; //if true, it will increase residents' knowledge
 	bool tactical_firefighters <- false; //if true, firefighter can call for reinforcements and are placed in strategical places on the map
 	bool evacution_city_reported <- false; //true when the evacuation alert has been issued
+	bool fires_extinguished_reported <- false; //true when the evacuation alert has been issued
 	
 	//Map
 	file bounds_shapefile <- file("../assets/shapefiles/bounds.shp");
@@ -213,9 +222,9 @@ global
 //		create fire number: 1 with: [choosed_location::{ 750, 300 }];
 		
 		//Faster experiment
-		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
-		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
-		create fire number: 1 with: [choosed_location::{ 595, 750 }]; // in the middle of the city
+//		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
+//		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
+//		create fire number: 1 with: [choosed_location::{ 595, 750 }]; // in the middle of the city
 
 		// Random fires
 		create fire number: nb_fire;
@@ -227,7 +236,7 @@ global
 	}
 
 	//stop experiment if : pause is triggered or when no more residents are active or the simulation never ends...
-	reflex pause_and_save when: do_pause or (residents_dead + residents_bunker = residents_total) or cycle > 1200
+	reflex pause_and_save when: do_pause or (residents_dead + residents_bunker = residents_total) or cycle > 5000
 	{
 		do_pause <- false;
 		do pause;
@@ -284,6 +293,39 @@ experiment Main type:gui
 	action createFire { create fire; }
 	user_command Create_Fire action: createFire;
 	
+	action killFires { 
+		ask fire { do die; }
+		ask plot where each.burning { burning <- false; color <- blend(# green, # maroon, 100 / burning_capacity); }
+		ask policemen { 
+			if (first(policemen where each.alive) = self) { 
+				do send_msg(list(every_resident_alive), nil, msg_policemen_extinguished);
+				end_message_sent <- true;
+			}
+			on_alert <- false;
+			warning_sent <- false;
+		}
+	}
+	user_command Kill_Fires action: killFires;
+	
+	action generalEvacuation { 
+		ask policemen { 
+			at_work <- false;
+			at_home <- false;
+			on_alert <- true;
+			warning_sent <- true;
+			end_message_sent <- false;
+			target <- nil;
+			resident_to_help <- nil;
+
+			if (first(policemen where each.alive) = self) //pick a policeman and make him send the alert
+			{
+				if(show_police_messages) { do status("Police is asking for general evacuation"); }
+				do send_msg(every_resident_alive, nil, msg_policemen_evacuation);
+			}
+		}
+	}
+	user_command General_Evacutation action: generalEvacuation;
+	
 	parameter "Cognitive Biases" var: use_cognitive_biases init: use_cognitive_biases category: "Cognitive Biases (hit reload after changing these values)";
 	parameter "Cognitive Biases Distribution" var: cognitive_biases_distribution init: cognitive_biases_distribution category: "Cognitive Biases (hit reload after changing these values)" max: 1.0;
 	
@@ -330,6 +372,10 @@ experiment Main type:gui
 		create threat_avoiders number: nb_threat_avoiders;
 		create threat_monitors number: nb_threat_monitors;
 		create unaware_reactors number: nb_unaware_reactors;
+		
+		create fire number: 1 with: [choosed_location::{ 420, 550 }]; // in the middle of the city
+		create fire number: 1 with: [choosed_location::{ 180, 810 }]; // in the middle of the city
+		create fire number: 1 with: [choosed_location::{ 595, 750 }]; // in the middle of the city
 	}
 
 	output

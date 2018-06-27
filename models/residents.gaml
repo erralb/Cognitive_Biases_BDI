@@ -1,9 +1,11 @@
 /**
-* Name: resident
-* *=======================
-* Author: Sofiane Sillali, Thomas Artigue, Pierre Blarre
-* Description:  Definition des types de residants
-* Fichier: resident.gaml
+* Name: Resident specie
+* 
+* Author: Pierre Blarre
+* Description:  
+* Mother specie of other behavioral profiles
+* 
+* TODO transform all messages to string variable in order to avoid mistake during communication
 */
 model Bushfires_BDI_Cognitive_Biases
 
@@ -19,7 +21,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	bool is_escorted <- false;
 	
 	//The rules are used to create a desire from a belief. We can specify the priority of the desire with a statement priority.
-	rule belief: no_danger_belief new_desire: work_desire strength: 10.0 remove_desire: escape_desire;
+	rule belief: no_danger_belief new_desire: work_desire strength: 10.0 remove_desire: escape_desire and defend_desire;
 	rule belief: potential_danger_belief new_desire: call_911_desire strength: 20.0 remove_desire: work_desire and escape_desire;
 	rule belief: can_defend_belief new_desire: defend_desire strength: 30.0 remove_desire: work_desire and home_desire;
 	rule belief: immediate_danger_belief new_desire: escape_desire strength: 40.0 remove_desire: work_desire and home_desire;
@@ -97,7 +99,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		bool ignored_because_of_cb <- false;
 		bool accepted <- false;
 		
-		if ("Alert for Residents : Go into shelter" in msg)
+		if (msg_policemen_alert_residents in msg)
 		{
 			nb_of_warning_msg <- nb_of_warning_msg + 1;
 			
@@ -133,25 +135,37 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 		}
 
 		// If the fires are extinguished, back to normal
-		if ("Fires extinguished" in msg)
+		if (msg_policemen_extinguished in msg or msg_firefighters_extinguished in msg)
 		{
+			do status("Received fires extinguished message");
 			nb_of_stop_msg <- nb_of_stop_msg + 1;
 			
 			if(cognitive_biases_influence) {
 				
-				nb_of_warning_msg_cb <- nb_of_warning_msg_cb + 1; //count messages sent to residents that are under cb influence
+				nb_of_stop_msg_cb <- nb_of_stop_msg_cb + 1; //count messages sent to residents that are under cb influence
 				
-				do cognitive_biases(potential_danger_belief, probability_to_react, "potential_danger_belief receive_message reflex"); //Apply cognitive biases
-				do cognitive_biases(immediate_danger_belief, probability_to_react, "immediate_danger_belief receive_message reflex"); //Apply cognitive biases
+				do remove_all_beliefs(potential_danger_belief); //should not believe anymore in immediate danger
+				do remove_all_beliefs(immediate_danger_belief); //should not believe anymore in immediate danger
 				
-				if(has_belief(potential_danger_belief) or has_belief(immediate_danger_belief)) //The agent still believes there's danger
+				do add_belief(no_danger_belief,probability_to_react);
+				
+//				do cognitive_biases(potential_danger_belief, 0.0, "potential_danger_belief receive_message reflex"); //Apply cognitive biases
+//				do cognitive_biases(immediate_danger_belief, 0.0, "immediate_danger_belief receive_message reflex"); //Apply cognitive biases
+				
+				if(has_desire(defend_desire)) //The agent still believes there's danger
 				{
 					nb_ignored_msg_while_cb <- nb_ignored_msg_while_cb +1;
 					if(show_residents_messages) { do status("I ignore the extinguished fires message"); }
 					do reject_proposal(message: info, contents: ["I ignore the end of the alert and keep defending"]);
 					kept_defense_late <- kept_defense_late +1;
+					accepted <- false;
 				}
-				else { accepted <- true; }
+				else { 
+					
+					accepted <- true;
+				}
+				
+				accepted <- true;
 				
 			}
 			else { accepted <- true; }
@@ -283,7 +297,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	finished_when: warning_sent 
 	instantaneous: true
 	{
-		do send_msg([one_of(firefighters where each.alive)], nil, "There's a fire");
+		do send_msg([one_of(firefighters where each.alive)], nil, msg_there_is_a_fire);
 		warning_sent <- true;
 		if(show_residents_messages) { do status("I called 911"); }
 	}
@@ -318,8 +332,9 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 	//Reset beliefs  and attributes to initial state
 	action back_to_normal_state
 	{
-		if (on_alert)
-		{
+//		if (on_alert)
+//		{
+			do status("Back to normal");
 			do remove_all_beliefs(potential_danger_belief);
 			do remove_all_beliefs(immediate_danger_belief);
 			do add_belief(no_danger_belief);
@@ -336,7 +351,7 @@ species resident parent: people skills: [moving, fipa] control: simple_bdi
 			evacuating <- false;
 			
 			if(show_residents_messages) { do status("back to normal"); }
-		}
+//		}
 	}
 
 }

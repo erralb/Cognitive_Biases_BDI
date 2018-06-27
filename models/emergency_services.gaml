@@ -7,6 +7,8 @@
 * 
 * We could probably add ambulances. Right now the police is helping evacuating people
 * 
+* TODO transform all messages to string variable in order to avoid mistake during communication
+* 
 */
 model Bushfires_BDI_Cognitive_Biases
 
@@ -59,8 +61,6 @@ species firefighters parent: people control: simple_bdi
 
 	reflex color { color <- rgb(energy / 100, 0, 0); } //color is changing when injured
 
-
-
 	// If hurt (energy below 1000) then it will go back to the station to get healed
 	reflex health when: alive and !injured and energy < 1000
 	{
@@ -71,24 +71,28 @@ species firefighters parent: people control: simple_bdi
 	reflex recieve_call when: !(empty(proposes))
 	{
 		message info <- proposes at 0;
-		if (info.contents[0] = "There's a fire" and !on_alert)
+		string msg <- info.contents[0];
+		
+		if (msg = msg_there_is_a_fire and !on_alert)
 		{
-			write ("Fireman called received : "+info.contents[0]);
+			write ("Fireman called received : "+msg);
 			do accept_proposal(message: info, contents: ['OK!']);
 			on_alert <- true;
-
+			fires_extinguished_reported <- false;
 			ask firefighters { on_alert <- true; }
 		}
 	}
 
 	// Stop fighting when fire is out
-	reflex stop_fighting when: fire_size <= 0 and alive and (go_fighting or fighting_fire) 
+	reflex stop_fighting when: fire_size <= 0 and alive and on_alert and ! fires_extinguished_reported
 	{
 		if (first(firefighters where each.alive) = self)
 		{
 //			do_pause <- true; //stop experiment
 			
-			do send_msg(list(policemen where each.alive), every_resident_alive, "Fires extinguished"); //End fire alert
+			do send_msg(list(policemen where each.alive), every_resident_alive, msg_firefighters_extinguished); //End fire alert
+			
+			fires_extinguished_reported <- true;
 			
 			if(show_firefighters_messages) { status("Fires extinguished"); }
 		}
@@ -104,8 +108,8 @@ species firefighters parent: people control: simple_bdi
 	// Go to closest fire
 	reflex go_fighting_fire when: on_alert and alive and !fighting_fire and !injured
 	{
-		if ((cycle + id) mod 10 = 0)
-		{
+//		if ((cycle + id) mod 10 = 0)
+//		{
 			// Search for building on fire
 			plot p_to_fight <- (plot where (each.is_building and each.burning)) closest_to self;
 
@@ -124,7 +128,7 @@ species firefighters parent: people control: simple_bdi
 					fighting_fire <- true;
 				}
 			}
-		}
+//		}
 
 		if (target != nil) { do goto target: target on: road_network; }
 	}
@@ -132,7 +136,7 @@ species firefighters parent: people control: simple_bdi
 	// Fight the fire
 	reflex fight_fire when: on_alert and alive and fighting_fire and !injured
 	{
-		if ((cycle + id) mod 20 = 0)
+		if ((cycle + id) mod 10 = 0)
 		{
 			//find closest burning plot
 			plot p_in_fire <- (plot where (each.is_building and each.burning)) closest_to self;
@@ -145,17 +149,16 @@ species firefighters parent: people control: simple_bdi
 				
 				// If plot is nil or to far away we water the fire directly
 				p_to_fight <- ((p_to_fight != nil) and (self distance_to p_to_fight < 20)) ? p_to_fight : p_in_fire;
+				
 				if p_to_fight != nil
 				{
 					//The fighting capacity is calculated regarding the firefighter energy mixed with random values
 					//The less energy he has, the less fighting power he has. I
 					//This way it simulates the firefighter getting tired but also how a firefighter can be more effecient depending moments
-					
 					float figthing_power <- 20.00;
 					if ( energy >= 15000 and energy < 20000 ) { figthing_power <- figthing_power - (energy / 10000 + rnd(1, 2)); } 
 					else if (energy >= 10000 and energy < 15000) { figthing_power <- figthing_power - (energy / 10000 + rnd(3, 4)); } 
 					else if (energy >= 1000 and energy < 9999) { figthing_power <- figthing_power - (energy / 1000 + rnd(4, 5)); }
-					
 					
 					// Water the fire so its heat goes down
 					p_to_fight.heat <- p_to_fight.heat - figthing_power;
@@ -164,10 +167,13 @@ species firefighters parent: people control: simple_bdi
 						p_to_fight.burning <- false;
 						p_to_fight.color <- # darkblue;
 					}
-
-					// Search the next burning plot to water
-					target <- point(one_of(p_to_fight.neighbors where (!each.burning)));
 					
+					// Search the next burning plot to water
+					if(p_to_fight.burning = false)
+					{
+						target <- point(one_of(p_to_fight.neighbors where (!each.burning)));
+					}
+
 					//if the next burning plot is to far, he stops fighting and must first move to the next one
 					if (target != nil and location distance_to target >= fighting_distance) { fighting_fire <- false; } 
 					else { location <- target; }
@@ -175,14 +181,12 @@ species firefighters parent: people control: simple_bdi
 			}
 		}
 
-		do goto target: target;
+		if(location != target ) { do goto target: target; }
 	}
 
 	//When injured, go back to the station to recover
 	reflex evacuate_to_rest when: alive and injured and !at_work
 	{
-		
-
 		target <- any_location_in(work);
 		do goto target: target on: road_network;
 		if (location = target) { 
@@ -207,7 +211,7 @@ species firefighters parent: people control: simple_bdi
 	{
 		if (fire_size > fire_uncontrollable and !evacution_city_reported and first(firefighters where each.alive) = self)
 		{
-			do send_msg(policemen where each.alive, every_resident_alive, 'General evacuation required');
+			do send_msg(policemen where each.alive, every_resident_alive, msg_policemen_evacuation);
 			evacution_city_reported <- true;
 		}
 	}
@@ -217,7 +221,7 @@ species firefighters parent: people control: simple_bdi
 	{
 		if (fire_size > fire_uncontrollable and first(firefighters where each.alive) = self)
 		{
-			write string(self) + " : Incontrollable fires, we need reinforcements";
+			do status("Incontrollable fires, we need reinforcements");
 			create firefighters number: 10;
 		}
 	}
@@ -259,29 +263,35 @@ species policemen parent: people
 		message info <- proposes at 0;
 		string msg <- info.contents[0];
 
-		if (msg contains "Fires extinguished") //Terminate fire alert
-		{
-			do accept_proposal(message: info, contents: ['OK!']);
-			if (first(policemen where each.alive) = self) { do send_msg(list(every_resident_alive), nil, "Fires extinguished"); }
-			on_alert <- false;
-			warning_sent <- false;
-		}
-
-		if (msg contains "General evacuation required") //Firefighter ask for a city evacuation
+		if (msg contains msg_policemen_evacuation) //Firefighter ask for a city evacuation
 		{
 			do accept_proposal(message: info, contents: ['OK!']);
 			at_work <- false;
 			at_home <- false;
 			on_alert <- true;
 			warning_sent <- true;
+			end_message_sent <- false;
 			target <- nil;
 			resident_to_help <- nil;
 
 			if (first(policemen where each.alive) = self) //pick a policeman and make him send the alert
 			{
 				if(show_police_messages) { do status("Police is asking for general evacuation"); }
-				do send_msg(every_resident_alive, nil, 'Alert for Residents : Go into shelter');
+				do send_msg(every_resident_alive, nil, msg_policemen_alert_residents);
 			}
+		}
+		
+		if (msg contains msg_firefighters_extinguished and !end_message_sent) //Terminate fire alert
+		{
+			if(show_police_messages) { do status("Firemen say fires are extinguished"); }
+			do accept_proposal(message: info, contents: ['OK!']);
+			if (first(policemen where each.alive) = self) { 
+				do send_msg(list(every_resident_alive where each.on_alert), nil, msg_policemen_extinguished);
+//				do send_msg(every_resident_alive where ( each.in_safe_place and each.warned), nil, 'Fires extinguished');
+				end_message_sent <- true;
+			}
+			on_alert <- false;
+			warning_sent <- false;
 		}
 	}
 
@@ -292,7 +302,7 @@ species policemen parent: people
 		{
 			alert_msg_sent <- alert_msg_sent +1;
 			if(show_police_messages) { do status("Evacuation reminder"); }
-			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, 'Alert for Residents : Go into shelter');
+			do send_msg(every_resident_alive where ( !each.in_safe_place and !each.warned), nil, msg_policemen_evacuation);
 		}
 	}
 

@@ -33,6 +33,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	bool at_work <- false;
 	bool in_safe_place <- false;
 	bool warning_sent <- false;
+	bool end_message_sent <- false;
 	agent escape_target <- nil;
 	bool on_alert <- false;
 	bool fighting_fire <- false;
@@ -52,6 +53,7 @@ species people skills: [moving, fipa] control: simple_bdi
 	
 	int nb_of_stop_msg <- 0; //total finished alert messages
 	int nb_of_ignored_stop_msg <- 0;
+	int nb_of_ignored_stop_msg_cb <- 0;
 	
 	//Definition of the variables featured in the BDI architecture. 
 	//How is this used, I am not sure. TODO: research how this should be used
@@ -399,8 +401,9 @@ species people skills: [moving, fipa] control: simple_bdi
 		}
 		else if ( get_belief(beliefName).strength > 0 or (nb_of_warning_msg > 3 or has_perceived_smoke or has_perceived_fire) ) //I started to believe, I should change my certainty
 		{
-			do remove_all_beliefs(beliefName);
-			do add_belief(beliefName, probability_to_react); // is this correct ... ?
+			if(show_residents_messages) { do status("I'm stuck within the Semmelweis Reflex"); }
+			do remove_all_beliefs(beliefName); // is this correct ... ?
+//			do add_belief(beliefName, probability_to_react); // is this correct ... ?
 			return false;
 		}
 	}

@@ -97,7 +97,7 @@ species person control: simple_bdi
 		else if ( get_belief(beliefName).strength > 0 or (nb_of_warning_msg > 3 or has_perceived_smoke or has_perceived_fire) ) //I started to believe, I should change my certainty
 		{
 			do remove_all_beliefs(beliefName);
-			do add_belief(beliefName, probability_to_react); // is this correct ... ?
+//			do add_belief(beliefName, probability_to_react); // is this correct ... ?
 			return false;
 		}
 	}
